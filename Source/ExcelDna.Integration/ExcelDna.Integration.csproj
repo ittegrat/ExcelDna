@@ -75,6 +75,8 @@
     <Compile Include="ExportedAssembly.cs" />
     <Compile Include="ExternalLibrary.cs" />
     <Compile Include="GuidUtility.cs" />
+    <Compile Include="Helpers\Caller.cs" />
+    <Compile Include="Helpers\Optional.cs" />
     <Compile Include="IExcelAddIn.cs" />
     <Compile Include="LogDisplay.cs">
       <SubType>Form</SubType>
@@ -110,6 +112,10 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>
+if /i "$(ConfigurationName)"=="release" (
+  if not exist "$(SolutionDir)..\_libs_" mkdir "$(SolutionDir)..\_libs_"
+  copy "$(TargetPath)" "$(SolutionDir)..\_libs_\"
+)
     </PostBuildEvent>
   </PropertyGroup>
 </Project>

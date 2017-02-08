@@ -106,6 +106,14 @@
     <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+if /i "$(ConfigurationName)"=="release" (
+  if not exist "$(SolutionDir)..\_libs_" mkdir "$(SolutionDir)..\_libs_"
+  copy "$(TargetPath)" "$(SolutionDir)..\_libs_\"
+)
+    </PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
