@@ -185,6 +185,12 @@ copy "$(SolutionDir)ExcelDna.Loader\bin\debug\ExcelDna.Loader.*" "$(TargetDir)" 
       <TargetMachine>MachineX86</TargetMachine>
       <ModuleDefinitionFile>ExcelDna.def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>
+if not exist "$(SolutionDir)..\_libs_" mkdir "$(SolutionDir)..\_libs_"
+copy "$(TargetPath)" "$(SolutionDir)..\_libs_\"
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -212,6 +218,12 @@ copy "$(SolutionDir)ExcelDna.Loader\bin\debug\ExcelDna.Loader.*" "$(TargetDir)" 
       <TurnOffAssemblyGeneration>false</TurnOffAssemblyGeneration>
       <ModuleDefinitionFile>ExcelDna.def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>
+if not exist "$(SolutionDir)..\_libs_" mkdir "$(SolutionDir)..\_libs_"
+copy "$(TargetPath)" "$(SolutionDir)..\_libs_\"
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DetectFx.cpp" />
