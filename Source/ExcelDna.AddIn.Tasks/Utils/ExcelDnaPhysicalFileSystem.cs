@@ -22,13 +22,21 @@ namespace ExcelDna.AddIn.Tasks.Utils
 
         public void CopyFile(string sourceFileName, string destFileName, bool overwrite)
         {
-            var fileInfo = new FileInfo(destFileName);
-            if (overwrite && fileInfo.Exists && fileInfo.IsReadOnly)
+            if (overwrite)
             {
-                fileInfo.IsReadOnly = false;
+                var fileInfo = new FileInfo(destFileName);
+                if (fileInfo.Exists && fileInfo.IsReadOnly)
+                {
+                    fileInfo.IsReadOnly = false;
+                }
             }
 
             File.Copy(sourceFileName, destFileName, overwrite);
+        }
+
+        public void DeleteFile(string sourceFileName)
+        {
+            File.Delete(sourceFileName);
         }
 
         public string GetRelativePath(string path, string workingDirectory = null)

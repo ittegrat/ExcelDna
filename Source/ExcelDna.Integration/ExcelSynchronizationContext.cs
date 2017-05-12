@@ -366,7 +366,28 @@ namespace ExcelDna.Integration
                 Type appType = xlApp.GetType();
 
                 // Now try Application.Run(macroName) if we are still alive.
-                appType.InvokeMember("Run", BindingFlags.InvokeMethod, null, xlApp, new object[] { macroName, 0.0 }, _enUsCulture);
+                object result = appType.InvokeMember("Run", BindingFlags.InvokeMethod, null, xlApp, new object[] { macroName, 0.0 }, _enUsCulture);
+                // Sometimes (e.g. when the paste live preview feature is active) Application.Run returns the integer value for E_FAIL, 
+                // and not a COM Error that is converted to an exception.
+                if (!result.Equals(0.0))    // We expect our "void" macro to just return 0.0.
+                {
+#if DEBUG
+                    // Some extra checks to see if we can understand the return values better
+                    if (!(result is int))
+                    {
+                        Logger.Registration.Error("Unexpected return type from Application.Run(\"SyncMacro_...\") - " + result);
+                    }
+                    else
+                    {
+                        if (   (int)result != E_FAIL
+                            && (int)result != E_NA)
+                        {
+                            Logger.Registration.Error("Unexpected return value from Application.Run(\"SyncMacro_...\") - " + result);
+                        }
+                    }
+#endif
+                    return false;
+                }
                 return true;
             }
             catch (TargetInvocationException tie)
@@ -380,6 +401,9 @@ namespace ExcelDna.Integration
                 throw;
             }
         }
+
+        const int E_FAIL = unchecked((int)0x80004005);
+        const int E_NA = unchecked((int)0x800A07FA);   // Not sure why we get this back from Application.Run("SyncMacro...")
 
         #region Checks for known COM errors
         const uint RPC_E_SERVERCALL_RETRYLATER = 0x8001010A;
