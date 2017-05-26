@@ -27,7 +27,7 @@ namespace ExcelDna.Integration.Helpers
   public class Caller
   {
 
-    public enum ReturnType
+    public enum CallerType
     {
       Range,
       String,
@@ -35,7 +35,7 @@ namespace ExcelDna.Integration.Helpers
       Other
     }
 
-    public readonly ReturnType Type;
+    public readonly CallerType Type;
 
     public readonly ExcelReference XlReference;
     public readonly int Rows = 0;
@@ -48,32 +48,32 @@ namespace ExcelDna.Integration.Helpers
       object obj = XlCall.Excel(XlCall.xlfCaller);
 
       if (obj is ExcelReference) {
-        Type = ReturnType.Range;
+        Type = CallerType.Range;
         XlReference = (ExcelReference)obj;
         Rows = XlReference.RowLast - XlReference.RowFirst + 1;
         Columns = XlReference.ColumnLast - XlReference.ColumnFirst + 1;
       }
       else if (obj is ExcelError && (ExcelError)obj == ExcelError.ExcelErrorRef) {
-        Type = ReturnType.RefError;
+        Type = CallerType.RefError;
       }
       else if (obj is string) {
-        Type = ReturnType.String;
+        Type = CallerType.String;
         Label = (string)obj;
       }
       else
-        Type = ReturnType.Other;
+        Type = CallerType.Other;
 
     }
 
-    public bool IsRange { get { return Type == ReturnType.Range; } }
-    public bool IsString { get { return Type == ReturnType.String; } }
-    public bool IsRefError { get { return Type == ReturnType.RefError; } }
+    public bool IsRange { get { return Type == CallerType.Range; } }
+    public bool IsString { get { return Type == CallerType.String; } }
+    public bool IsRefError { get { return Type == CallerType.RefError; } }
 
     public bool LackRows(int desiredRows) {
-      return ((Type == ReturnType.Range) && (desiredRows>Rows));
+      return ((Type == CallerType.Range) && (desiredRows>Rows));
     }
     public bool LackColumns(int desiredCols) {
-      return ((Type == ReturnType.Range) && (desiredCols > Columns));
+      return ((Type == CallerType.Range) && (desiredCols > Columns));
     }
 
   }
