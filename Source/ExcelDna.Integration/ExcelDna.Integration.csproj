@@ -77,7 +77,6 @@
     <Compile Include="ExternalLibrary.cs" />
     <Compile Include="GuidUtility.cs" />
     <Compile Include="Helpers\Caller.cs" />
-    <Compile Include="Helpers\Optional.cs" />
     <Compile Include="IExcelAddIn.cs" />
     <Compile Include="LogDisplay.cs">
       <SubType>Form</SubType>
