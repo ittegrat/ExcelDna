@@ -69,13 +69,6 @@ namespace ExcelDna.Integration.Helpers
     public bool IsString { get { return Type == CallerType.String; } }
     public bool IsRefError { get { return Type == CallerType.RefError; } }
 
-    public bool LackRows(int desiredRows) {
-      return ((Type == CallerType.Range) && (desiredRows>Rows));
-    }
-    public bool LackColumns(int desiredCols) {
-      return ((Type == CallerType.Range) && (desiredCols > Columns));
-    }
-
   }
 
 }
