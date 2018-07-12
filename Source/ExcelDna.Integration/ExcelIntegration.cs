@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using JetBrains.Annotations;
 
 namespace ExcelDna.Integration
 {
@@ -31,6 +32,8 @@ namespace ExcelDna.Integration
         const int ExcelIntegrationVersion = 8;
 
         private static TryExcelImplDelegate tryExcelImpl;
+
+        [UsedImplicitly] // called by reflection
         internal static void SetTryExcelImpl(TryExcelImplDelegate d)
         {
             tryExcelImpl = d;
@@ -184,6 +187,11 @@ namespace ExcelDna.Integration
 		internal static byte[] GetAssemblyBytes(string assemblyName)
 		{
 			return getResourceBytesDelegate(assemblyName, 0);
+		}
+
+		internal static byte[] GetPdbBytes(string assemblyName)
+		{
+			return getResourceBytesDelegate(assemblyName, 4);
 		}
 
 		internal static byte[] GetDnaFileBytes(string dnaFileName)

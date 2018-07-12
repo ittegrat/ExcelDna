@@ -1,4 +1,6 @@
-﻿namespace ExcelDna.AddIn.Tasks.Utils
+﻿using System;
+
+namespace ExcelDna.AddIn.Tasks.Utils
 {
     public interface IExcelDnaProject
     {

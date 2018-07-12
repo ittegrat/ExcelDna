@@ -1,4 +1,4 @@
-﻿//  Copyright (c) Govert van Drimmelen. All rights reserved.
+//  Copyright (c) Govert van Drimmelen. All rights reserved.
 //  Excel-DNA is licensed under the zlib license. See LICENSE.txt for details.
 
 using System;
@@ -197,7 +197,8 @@ Other assemblies are packed if marked with Pack=""true"" in the .dna file.
 			string packedName = null;
 			if (integrationPath != null)
 			{
-				packedName = ru.AddAssembly(integrationPath, compress, multithreading);
+				// pdb is not in the nuget package, so chances are we want it if it is present (ExcelDna dev)// pdb is not in the nuget package, so chances are we want it if it is present (ExcelDna dev)	                // pdb is not in the nuget package, so chances are we want it if it is present (ExcelDna dev)// pdb is not in the nuget package, so chances are we want it if it is present (ExcelDna dev)
+				packedName = ru.AddAssembly(integrationPath, compress, multithreading, true);
 			}
 			if (packedName == null)
 			{
@@ -239,7 +240,13 @@ Other assemblies are packed if marked with Pack=""true"" in the .dna file.
 			    bool copiedVersion = false;
 				foreach (ExternalLibrary ext in dna.ExternalLibraries)
 				{
-				    string path = dna.ResolvePath(ext.Path);
+					var path = dna.ResolvePath(ext.Path);
+					if (!File.Exists(path))
+					{
+						Console.WriteLine("!!! ExternalLibrary `{0}` not found. Aborting.", ext.Path);
+						Environment.Exit(1);
+					}
+
 					if (ext.Pack)
 					{
                         Console.WriteLine("  ~~> ExternalLibrary path {0} resolved to {1}.", ext.Path, path);
@@ -252,7 +259,7 @@ Other assemblies are packed if marked with Pack=""true"" in the .dna file.
 						}
 						else
 						{
-							string packedName = ru.AddAssembly(path, compress, multithreading);
+							string packedName = ru.AddAssembly(path, compress, multithreading, ext.IncludePdb);
 							if (packedName != null)
 							{
 								ext.Path = "packed:" + packedName;
@@ -369,7 +376,7 @@ Other assemblies are packed if marked with Pack=""true"" in the .dna file.
 					}
 					
 					// It worked!
-					string packedName = ru.AddAssembly(path, compress, multithreading);
+					string packedName = ru.AddAssembly(path, compress, multithreading, rf.IncludePdb);
 					if (packedName != null)
 					{
 						rf.Path = "packed:" + packedName;

@@ -1,22 +1,35 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
+using ExcelDna.AddIn.Tasks.Logging;
 
 namespace ExcelDna.AddIn.Tasks.Utils
 {
     internal class DevToolsEnvironment : IDisposable
     {
+        private readonly IBuildLogger _log;
         private bool _isMessageFilterRegistered;
+
+        public DevToolsEnvironment(IBuildLogger log)
+        {
+            _log = log ?? throw new ArgumentNullException(nameof(log));
+        }
 
         public EnvDTE.Project GetProjectByName(string projectName)
         {
+            _log.Debug("Starting GetProjectByName");
+
             var vsProcessId = GetVisualStudioProcessId();
+            _log.Debug($"VS Process ID: {vsProcessId}");
 
             var dte = GetDevToolsEnvironment(vsProcessId);
+            _log.Debug($"DevToolsEnvironment?: {dte}");
+
             if (dte == null) return null;
 
             if (!_isMessageFilterRegistered)
@@ -29,9 +42,21 @@ namespace ExcelDna.AddIn.Tasks.Utils
                 .Solution
                 .Projects
                 .OfType<EnvDTE.Project>()
+                .SelectMany(GetProjectAndSubProjects)
                 .SingleOrDefault(p =>
                     string.Compare(p.Name, projectName, StringComparison.OrdinalIgnoreCase) == 0);
 
+            if (project == null)
+            {
+                _log.Debug("Did not find project");
+                _log.Debug($"Looked for {projectName}");
+                _log.Debug("List of projects:");
+
+                foreach (var p in dte.Solution.Projects)
+                {
+                    _log.Debug($"    {p.GetType().Name}  -  Is EnvDTE? {p is EnvDTE.Project}  -  {(p as EnvDTE.Project)?.Name}");
+                }
+            }
             return project;
         }
 
@@ -144,6 +169,23 @@ namespace ExcelDna.AddIn.Tasks.Utils
             return runningObject as EnvDTE.DTE;
         }
 
+        private static IEnumerable<EnvDTE.Project> GetProjectAndSubProjects(EnvDTE.Project project)
+        {
+            if (project.Kind == VsProjectKindSolutionFolder)
+            {
+                return project.ProjectItems
+                    .OfType<EnvDTE.ProjectItem>()
+                    .Select(p => p.SubProject)
+                    .Where(p => p != null)
+                    .SelectMany(GetProjectAndSubProjects);
+            }
+
+            return new[] { project };
+        }
+
+		// Copied from EnvDTE80, instead of referencing it just because of this one string
+		private const string VsProjectKindSolutionFolder = "{66A26720-8FB5-11D2-AA7E-00C04F688DDE}";
+		
         [DllImport("ole32.dll")]
         private static extern int CreateBindCtx(uint reserved, out IBindCtx ppbc);
 
