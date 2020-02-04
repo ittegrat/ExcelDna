@@ -86,6 +86,7 @@ Other assemblies are packed if marked with Pack=""true"" in the .dna file.
             bool overwrite = false;
             bool compress = true;
             bool multithreading = true;
+      string HostXLL = "ExcelDna.xll";
 
 			if (!File.Exists(dnaPath))
 			{
@@ -120,6 +121,10 @@ Other assemblies are packed if marked with Pack=""true"" in the .dna file.
                     if (args[i].Equals("/NoMultiThreading", StringComparison.CurrentCultureIgnoreCase))
                     {
                         multithreading = false;
+                    }
+                    if (args[i].Equals("/x64", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        HostXLL = "ExcelDna64.xll";
                     }
                     
                 }
@@ -174,11 +179,11 @@ Other assemblies are packed if marked with Pack=""true"" in the .dna file.
             {
                 // CONSIDER: Maybe the next two (old) search locations should be deprecated?
                 // Then try one called ExcelDna.xll next to the .dna file
-                xllInputPath = Path.Combine(dnaDirectory, "ExcelDna.xll");
+                xllInputPath = Path.Combine(dnaDirectory, HostXLL);
                 if (!File.Exists(xllInputPath))
                 {
                     // Then try one called ExcelDna.xll next to the ExcelDnaPack.exe
-                    xllInputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExcelDna.xll");
+                    xllInputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, HostXLL);
                     if (!File.Exists(xllInputPath))
                     {
                         Console.WriteLine("Base add-in not found.\r\n\r\n" + usageInfo);
