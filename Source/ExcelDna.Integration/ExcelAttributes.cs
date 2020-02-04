@@ -10,6 +10,7 @@ namespace ExcelDna.Integration
     [MeansImplicitUse]
 	public class ExcelFunctionAttribute : Attribute
 	{
+		public string Prefix = null;
 		public string Name = null;
 		public string Description = null;
 		public string Category = null;
@@ -73,6 +74,7 @@ namespace ExcelDna.Integration
 		}
 
 		public void MergeGroupAttributes(ExcelFunctionAttribute ca) {
+			if (Prefix == null) Prefix = ca.Prefix;
 			if (Description == null) Description = ca.Description;
 			if (Category == null) Category = ca.Category;
 			if (HelpTopic == null) HelpTopic = ca.HelpTopic;
@@ -110,6 +112,7 @@ namespace ExcelDna.Integration
 	[MeansImplicitUse]
 	public class ExcelCommandAttribute : Attribute
 	{
+		public string Prefix = null;
 		public string Name = null;
 		public string Description = null;
 		public string HelpTopic = null;
@@ -148,6 +151,7 @@ namespace ExcelDna.Integration
 		}
 
 		public void MergeGroupAttributes(ExcelCommandAttribute ca) {
+			if (Prefix == null) Prefix = ca.Prefix;
 			if (Description == null) Description = ca.Description;
 			if (HelpTopic == null) HelpTopic = ca.HelpTopic;
 			if (MenuName == null) MenuName = ca.MenuName;

@@ -204,6 +204,7 @@ namespace ExcelDna.Loader
                 
             if (TypeHelper.TypeHasAncestorWithFullName(attribType, "ExcelDna.Integration.ExcelFunctionAttribute"))
             {
+                string prefix = (string) attribType.GetField("Prefix").GetValue(attrib);
                 string name = (string) attribType.GetField("Name").GetValue(attrib);
                 string description = (string) attribType.GetField("Description").GetValue(attrib);
                 string category = (string) attribType.GetField("Category").GetValue(attrib);
@@ -219,6 +220,10 @@ namespace ExcelDna.Loader
                 if (name != null)
                 {
                     Name = name;
+                }
+                if (prefix != null)
+                {
+                    Name = prefix + Name;
                 }
                 if (description != null)
                 {
@@ -246,6 +251,7 @@ namespace ExcelDna.Loader
             }
             else if (TypeHelper.TypeHasAncestorWithFullName(attribType, "ExcelDna.Integration.ExcelCommandAttribute"))
             {
+                string prefix = (string) attribType.GetField("Prefix").GetValue(attrib);
                 string name = (string) attribType.GetField("Name").GetValue(attrib);
                 string description = (string) attribType.GetField("Description").GetValue(attrib);
                 string helpTopic = (string) attribType.GetField("HelpTopic").GetValue(attrib);
@@ -260,6 +266,10 @@ namespace ExcelDna.Loader
                 if (name != null)
                 {
                     Name = name;
+                }
+                if (prefix != null)
+                {
+                    Name = prefix + Name;
                 }
                 if (description != null)
                 {
