@@ -281,6 +281,7 @@ namespace ExcelDna.Logging
                 LogStringsUpdated = true;
             }
         }
+        public static void RecordMessage(string message) { RecordLine(message); }
 
         static void TruncateLog()
         {
