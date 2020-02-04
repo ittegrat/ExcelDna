@@ -43,6 +43,8 @@ namespace ExcelDna.Integration.Helpers
 
     public readonly string Label;
 
+    public delegate string CustomMessage(bool checkCols, int desired, int actual);
+
     public Caller() {
 
       object obj = XlCall.Excel(XlCall.xlfCaller);
@@ -68,6 +70,21 @@ namespace ExcelDna.Integration.Helpers
     public bool IsRange { get { return Type == CallerType.Range; } }
     public bool IsString { get { return Type == CallerType.String; } }
     public bool IsRefError { get { return Type == CallerType.RefError; } }
+
+    public bool TooSmall(bool checkCols, int desired, out string msg) {
+      return TooSmall(checkCols, desired, out msg, null);
+    }
+    public bool TooSmall(bool checkCols, int desired, out string msg, CustomMessage CustomMessage) {
+      if (Type == Caller.CallerType.Range) {
+        int i = checkCols ? Columns : Rows;
+        if (i < desired) {
+          msg = ((CustomMessage == null) ? ((checkCols ? "#COLS" : "#ROWS") + "{" + desired + "}") : CustomMessage(checkCols, desired, i));
+          return true;
+        }
+      }
+      msg = string.Empty;
+      return false;
+    }
 
   }
 
