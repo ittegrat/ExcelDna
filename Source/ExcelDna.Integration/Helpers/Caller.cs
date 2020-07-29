@@ -37,7 +37,7 @@ namespace ExcelDna.Integration.Helpers
 
     public readonly CallerType Type;
 
-    public readonly ExcelReference XlReference;
+    public readonly ExcelReference Range = null;
     public readonly int Rows = 0;
     public readonly int Columns = 0;
 
@@ -47,20 +47,20 @@ namespace ExcelDna.Integration.Helpers
 
     public Caller() {
 
-      object obj = XlCall.Excel(XlCall.xlfCaller);
+      object caller = XlCall.Excel(XlCall.xlfCaller);
 
-      if (obj is ExcelReference) {
+      if (caller is ExcelReference) {
         Type = CallerType.Range;
-        XlReference = (ExcelReference)obj;
-        Rows = XlReference.RowLast - XlReference.RowFirst + 1;
-        Columns = XlReference.ColumnLast - XlReference.ColumnFirst + 1;
+        Range = (ExcelReference)caller;
+        Rows = Range.RowLast - Range.RowFirst + 1;
+        Columns = Range.ColumnLast - Range.ColumnFirst + 1;
       }
-      else if (obj is ExcelError && (ExcelError)obj == ExcelError.ExcelErrorRef) {
+      else if (caller is ExcelError && (ExcelError)caller == ExcelError.ExcelErrorRef) {
         Type = CallerType.RefError;
       }
-      else if (obj is string) {
+      else if (caller is string) {
         Type = CallerType.String;
-        Label = (string)obj;
+        Label = (string)caller;
       }
       else
         Type = CallerType.Other;
