@@ -50,6 +50,16 @@ namespace ExcelDna.Integration
             }
         }
 
+        private static FileInfo _xllPathPathInfo;
+        [XmlIgnore]
+        internal static FileInfo XllPathInfo
+        {
+            get
+            {
+                return _xllPathPathInfo;
+            }
+        }
+
         private string _Name;
         [XmlAttribute]
         public string Name
@@ -239,20 +249,20 @@ namespace ExcelDna.Integration
             // CAREFUL: This interacts with the implementation of ExcelRtdServer to implement the thread-safe synchronization.
             // Check whether we have an ExcelRtdServer type, and need to install the Sync Window
             // Uninstalled in the AutoClose
-            bool registerSyncManager = false;
+            bool installSyncManager = false;
             foreach (Type rtdType in rtdServerTypes)
             {
                 if (rtdType.IsSubclassOf(typeof(ExcelRtdServer)))
                 {
-                    registerSyncManager = true;
+                    installSyncManager = true;
                     break;
                 }
             }
-            if (registerSyncManager)
+            if (installSyncManager)
             {
                 try
                 {
-                    SynchronizationManager.Install();
+                    SynchronizationManager.Install(false);  // Install but don't try to register the SyncMacro yet
                 }
                 catch (InvalidOperationException)
                 {
@@ -271,7 +281,7 @@ namespace ExcelDna.Integration
         {
             // Register special RegistrationInfo function
             RegistrationInfo.Register();
-            SynchronizationManager.Install();
+            SynchronizationManager.Install(true);
             // Register my Methods
             ExcelIntegration.RegisterMethods(_methods);
 
@@ -408,6 +418,7 @@ namespace ExcelDna.Integration
 
             // CAREFUL: Sequence here is fragile - this is the first place where we start logging
             _XllPath = xllPath;
+            _xllPathPathInfo = new FileInfo(xllPath);
             Logging.LogDisplay.CreateInstance();
             Logger.Initialization.Verbose("Enter DnaLibrary.InitializeRootLibrary");
             byte[] dnaBytes = ExcelIntegration.GetDnaFileBytes("__MAIN__");

@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 
 namespace ExcelDna.Integration
@@ -682,6 +683,14 @@ namespace ExcelDna.Integration
             }
         }
 
+        public static FileInfo XllPathInfo
+        {
+            get
+            {
+                return DnaLibrary.XllPathInfo;
+            }
+        }
+
         static readonly Guid _excelDnaNamespaceGuid = new Guid("{306D016E-CCE8-4861-9DA1-51A27CBE341A}");
         internal static Guid XllGuid { get { return GuidFromXllPath(XllPath); } }
 
@@ -720,6 +729,24 @@ namespace ExcelDna.Integration
                     }
                 }
                 return _xlLimits;
+            }
+        }
+        #endregion
+
+        #region SupportsDynamicArrays
+        static bool? _supportsDynamicArrays;
+        public static bool SupportsDynamicArrays
+        {
+            get
+            {
+                if (!_supportsDynamicArrays.HasValue)
+                {
+                    object result;
+                    var returnValue = XlCall.TryExcel(614 , out result, new object[] { 1 }, new object[] { true }); // 614 means FILTER
+                    // Now examine returnValue, which should be of type XlReturn – it will presumably be XlReturn.XlReturnSuccess for Dynamic Array Excel, otherwise XlReturn.XlReturnFailed or similar for non-DA Excel.
+                    _supportsDynamicArrays = (returnValue == XlCall.XlReturn.XlReturnSuccess);
+                }
+                return _supportsDynamicArrays.Value;
             }
         }
         #endregion
