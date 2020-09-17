@@ -92,6 +92,9 @@
     <Compile Include="..\Lzma\SevenZipHelper.cs">
       <Link>Lzma\SevenZipHelper.cs</Link>
     </Compile>
+    <Compile Include="..\SharedAssemblyInfo.cs">
+      <Link>Properties\SharedAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="PackProgram.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceHelper.cs" />

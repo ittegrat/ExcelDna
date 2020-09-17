@@ -71,6 +71,9 @@
     <Compile Include="..\Lzma\RangeCoderBitTree.cs">
       <Link>Lzma\RangeCoderBitTree.cs</Link>
     </Compile>
+    <Compile Include="..\SharedAssemblyInfo.cs">
+      <Link>Properties\SharedAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="AssemblyManager.cs" />
     <Compile Include="IntegrationMarshalHelpers.cs" />
     <Compile Include="LoaderHelpers.cs" />
