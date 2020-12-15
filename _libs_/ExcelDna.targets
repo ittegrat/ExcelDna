@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--
+    **************************************************************************************
+    *********************************       README       *********************************
+    **************************************************************************************
+    This .targets file overloads the following "DependsOn" properties:
+      * BuildDependsOn: append an ExcelDnaPostBuild target that copy the ExcelDNA related
+        files into the $(TargetDir) folder (Configuration: Debug) or create a packed xll
+        (Configuration: Release).
+      * CleanDependsOn: append an ExcelDnaPostClean target that deletes the ExcelDNA
+        related files in the $(TargetDir) folder.
+
+    This .targets file reads the following .props files (if they exist):
+      * ExcelDna.Global.props
+      * ExcelDna.Solution.props
+      * ExcelDna.Project.props
+
+    The following properties must be set before using this .targets file. If the
+    properties are not set, some defaults are picked.
+      * ExcelDnaSDK: the absolute path of the folder where the ExcelDNA binaries that are
+        currently being used are located. Default: $(MSBuildThisFileDirectory).
+      * DnaProjectRoot: the path of the folder where the ExcelDNA related files are
+        stored. Default: $(ProjectDir).
+      * DnaProjectName: the name of the main ExcelDNA project. It is used to derive the
+        path of the *.dna and the *.xll.config files. If exist a $(Configuration)
+        dependent version (i.e. a *.$(Configuration).* file), it takes precedence.
+        Default: $(ProjectName)
+      * DnaMasterProject: ...   Default: $(DnaProjectName)
+      * TestRoot: an optional folder containing test workbooks.
+        Default: $(ProjectDir)\Workbooks.
+      * TestWorkbook: the path of the main test workbook. It is automatically opened when
+        you start debugging. Default: $(TestRoot)\$(DnaProjectName).xls[m|x].
+  -->
+
+  <PropertyGroup>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+    <GenerateTypeLib>false</GenerateTypeLib>
+  </PropertyGroup>
+
+  <!-- GLOBAL Settings -->
+  <Import Project="$(MSBuildThisFileDirectory)ExcelDna.Global.props" />
+
+  <!-- SOLUTION Settings -->
+  <Import Condition="Exists('$(SolutionDir)ExcelDna.Solution.props')" Project="$(SolutionDir)ExcelDna.Solution.props" />
+
+  <!-- PROJECT Settings -->
+  <Import Condition="Exists('$(ProjectDir)ExcelDna.Project.props')" Project="$(ProjectDir)ExcelDna.Project.props" />
+
+  <!-- Default Settings -->
+  <PropertyGroup>
+
+    <DnaProjectRoot Condition="'$(DnaProjectRoot)' == ''" >$(ProjectDir)</DnaProjectRoot>
+    <DnaProjectName Condition="'$(DnaProjectName)' == ''" >$(ProjectName)</DnaProjectName>
+
+    <DnaMasterProject Condition="'$(DnaMasterProject)' == ''" >$(DnaProjectName)</DnaMasterProject>
+
+    <DnaProjectFile Condition="Exists('$(DnaProjectRoot)$(DnaProjectName).$(Configuration).dna')" >$(DnaProjectRoot)$(DnaProjectName).$(Configuration).dna</DnaProjectFile>
+    <DnaProjectFile Condition="'$(DnaProjectFile)' == ''" >$(DnaProjectRoot)$(DnaProjectName).dna</DnaProjectFile>
+
+    <DnaProjectFile64 Condition="Exists('$(DnaProjectRoot)$(DnaProjectName)64.$(Configuration).dna')" >$(DnaProjectRoot)$(DnaProjectName)64.$(Configuration).dna</DnaProjectFile64>
+    <DnaProjectFile64 Condition="'$(DnaProjectFile64)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName)64.dna')" >$(DnaProjectRoot)$(DnaProjectName)64.dna</DnaProjectFile64>
+    <DnaProjectFile64 Condition="'$(DnaProjectFile64)' == ''" >$(DnaProjectFile)</DnaProjectFile64>
+
+    <DnaConfigFile Condition="Exists('$(DnaProjectRoot)$(DnaProjectName).$(Configuration).xll.config')" >$(DnaProjectRoot)$(DnaProjectName).$(Configuration).xll.config</DnaConfigFile>
+    <DnaConfigFile Condition="'$(DnaConfigFile)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName).xll.config')" >$(DnaProjectRoot)$(DnaProjectName).xll.config</DnaConfigFile>
+
+    <DnaConfigFile64 Condition="Exists('$(DnaProjectRoot)$(DnaProjectName)64.$(Configuration).xll.config')" >$(DnaProjectRoot)$(DnaProjectName)64.$(Configuration).xll.config</DnaConfigFile64>
+    <DnaConfigFile64 Condition="'$(DnaConfigFile64)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName)64.xll.config')" >$(DnaProjectRoot)$(DnaProjectName)64.xll.config</DnaConfigFile64>
+    <DnaConfigFile64 Condition="'$(DnaConfigFile64)' == ''" >$(DnaConfigFile)</DnaConfigFile64>
+
+    <TestRoot Condition="'$(TestRoot)' == ''" >$(ProjectDir)Workbooks\</TestRoot>
+    <TestWorkbook Condition="'$(TestWorkbook)' == '' And Exists('$(TestRoot)$(DnaProjectName).xlsm')" >$(DnaProjectName).xlsm</TestWorkbook>
+    <TestWorkbook Condition="'$(TestWorkbook)' == '' And Exists('$(TestRoot)$(DnaProjectName).xlsx')" >$(DnaProjectName).xlsx</TestWorkbook>
+
+  </PropertyGroup>
+
+  <!-- WARNING
+    Debug settings seem to be parsed only once at Solution / Project loading. Any change, including existence
+    of the test files, needs a full reload (i.e. reopen the solution) to be detected.
+  -->
+  <PropertyGroup>
+    <StartWorkingDirectory Condition="Exists('$(TestRoot)')" >$(TestRoot)</StartWorkingDirectory>
+    <StartArguments>/X $(TargetDir)$(DnaProjectName).xll $(TestWorkbook)</StartArguments>
+  </PropertyGroup>
+
+  <!-- ExcelDna Integration Reference -->
+  <ItemGroup>
+    <Reference Include="ExcelDna.Integration">
+      <HintPath>$(ExcelDnaSDK)ExcelDna.Integration.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- ExcelDna PostBuild Target -->
+  <PropertyGroup>
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      ExcelDnaPostBuild
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <Target Name="ExcelDnaPostBuild" Condition="'$(DnaProjectName)' == '$(DnaMasterProject)'">
+    <CallTarget Targets="ExcelDnaPostBuild32"/>
+    <CallTarget Targets="ExcelDnaPostBuild64"/>
+  </Target>
+
+  <Target Name="ExcelDnaPostBuild32" Condition="'$(Platform)' == 'x86' Or '$(Platform)' == 'AnyCPU'">
+    <Error Condition="!Exists('$(DnaProjectFile)')" Text="Missing AddIn Project file: $(DnaProjectFile)." />
+    <Copy SourceFiles="$(DnaProjectFile)" DestinationFiles="$(TargetDir)\$(DnaProjectName).dna" SkipUnchangedFiles="true" />
+    <Copy Condition="'$(DnaConfigFile)' != ''" SourceFiles="$(DnaConfigFile)" DestinationFiles="$(TargetDir)\$(DnaProjectName).xll.config" SkipUnchangedFiles="true" />
+    <Copy Condition="'$(Configuration)' == 'Debug'" SourceFiles="$(ExcelDnaSDK)\ExcelDna.xll" DestinationFiles="$(TargetDir)\$(DnaProjectName).xll" SkipUnchangedFiles="true" />
+    <Exec Condition="$(GenerateTypeLib)" WorkingDirectory="$(TargetDir)" Command='"$(TargetFrameworkSDKToolsDirectory)tlbexp" /nologo /win32 /asmpath:$(ExcelDnaSDK) $(TargetPath)' />
+    <Exec Condition="'$(Configuration)' == 'Release'" WorkingDirectory="$(TargetDir)" Command="$(ExcelDnaSDK)\ExcelDnaPack $(DnaProjectName).dna /O $(DnaProjectName).xll /Y"/>
+    <Message Importance="high" Text="$(DnaProjectName).xll ready." />
+  </Target>
+
+  <Target Name="ExcelDnaPostBuild64" Condition="'$(Platform)' == 'x64' Or '$(Platform)' == 'AnyCPU'">
+    <Error Condition="!Exists('$(DnaProjectFile64)')" Text="Missing AddIn Project file: $(DnaProjectFile64)." />
+    <Copy SourceFiles="$(DnaProjectFile64)" DestinationFiles="$(TargetDir)\$(DnaProjectName)64.dna" SkipUnchangedFiles="true" />
+    <Copy Condition="'$(DnaConfigFile64)' != ''" SourceFiles="$(DnaConfigFile64)" DestinationFiles="$(TargetDir)\$(DnaProjectName)64.xll.config" SkipUnchangedFiles="true" />
+    <Copy Condition="'$(Configuration)' == 'Debug'" SourceFiles="$(ExcelDnaSDK)\ExcelDna64.xll" DestinationFiles="$(TargetDir)\$(DnaProjectName)64.xll" SkipUnchangedFiles="true" />
+    <Exec Condition="$(GenerateTypeLib)" WorkingDirectory="$(TargetDir)" Command='"$(TargetFrameworkSDKToolsDirectory)tlbexp" /nologo /win64 /silence:131175 /asmpath:$(ExcelDnaSDK) $(TargetPath)' />
+    <Exec Condition="'$(Configuration)' == 'Release'" WorkingDirectory="$(TargetDir)" Command="$(ExcelDnaSDK)\ExcelDnaPack $(DnaProjectName)64.dna /O $(DnaProjectName)64.xll /Y /x64" />
+    <Message Importance="high" Text="$(DnaProjectName)64.xll ready." />
+  </Target>
+
+  <!-- ExcelDna PostClean Target -->
+  <PropertyGroup>
+    <CleanDependsOn>
+      $(CleanDependsOn);
+      ExcelDnaPostClean
+    </CleanDependsOn>
+  </PropertyGroup>
+
+  <Target Name="ExcelDnaPostClean">
+    <Delete Files="$(TargetDir)\$(TargetName).tlb" />
+    <Delete Files="$(TargetDir)\$(DnaProjectName).dna" />
+    <Delete Files="$(TargetDir)\$(DnaProjectName).xll" />
+    <Delete Files="$(TargetDir)\$(DnaProjectName).xll.config" />
+    <Delete Files="$(TargetDir)\$(DnaProjectName)64.xll" />
+    <Delete Files="$(TargetDir)\$(DnaProjectName)64.xll.config" />
+  </Target>
+
+</Project>
