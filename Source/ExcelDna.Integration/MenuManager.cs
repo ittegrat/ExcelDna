@@ -32,14 +32,13 @@ namespace ExcelDna.Integration
             }
         }
 
-        // These methods are called from XlRegistration via reflection 
-        // The binding is in IntegrationHelpers
-        static void AddCommandMenu(string commandName, string menuName, string menuText, string description, string shortCut, string helpTopic)
+        // These methods are called from the Loader in XlRegistration via IntegrationHelpers
+        internal static void AddCommandMenu(string commandName, string menuName, string menuText, string description, string shortCut, string helpTopic)
         {
             _menuManager.AddCommandMenu(commandName, menuName, menuText, description, shortCut, helpTopic);
         }
 
-        static void RemoveCommandMenus()
+        internal static void RemoveCommandMenus()
         {
             _menuManager.RemoveCommandMenus();
         }

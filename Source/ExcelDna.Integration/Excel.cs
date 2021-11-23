@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace ExcelDna.Integration
 {
@@ -256,9 +257,10 @@ namespace ExcelDna.Integration
         }
 
         // This call might throw an access violation 
-        // .NET40: If this assembly is compiled for .NET 4, add this attribute to get the expected behaviour.
+        // NOTE .NET5+: If this assembly is run under .NET 5+ we need to re-engineer this call to handle possible access violations outside the managed code,
+        // or figure out the source and timing of safe vs dangerous calls.
         // (Also for CallPenHelper)
-        // [HandleProcessCorruptedStateExceptions]
+        [HandleProcessCorruptedStateExceptions]
         private static bool IsExcelApiAvailable()
         {
             try
@@ -540,22 +542,42 @@ namespace ExcelDna.Integration
             return inFunctionWizard;
         }
 
+        struct FuncWizChild {
+            public int ScrollBar;
+            public int EDTBX;
+        };
+
         static bool IsFunctionWizardWindow(IntPtr hWnd, StringBuilder buffer)
         {
             buffer.Length = 0;
             // Check the window class
-            GetClassNameW(hWnd, buffer, buffer.Capacity);
+            if (GetClassNameW(hWnd, buffer, buffer.Capacity) == 0)
+              return false;
             if (!buffer.ToString().StartsWith("bosa_sdm_XL"))
                 return false;
 
-            buffer.Length = 0;
-            GetWindowTextW(hWnd, buffer, buffer.Capacity);
-            string title = buffer.ToString();
-            // Another window that has been reported as causing issue has title "Collect and Paste 2.0"
-            if (title.Contains("Replace") || title.Contains("Paste") || title.Contains("Recovery"))
-                return false;
+            FuncWizChild child = new FuncWizChild { ScrollBar = 0, EDTBX = 0 };
+            EnumChildWindows(hWnd, delegate (IntPtr hWndEnum, IntPtr param)
+            {
+                buffer.Length = 0;
+                if (GetClassNameW(hWndEnum, buffer, buffer.Capacity) == 0)
+                    return false;
 
-            return true;
+                string title = buffer.ToString();
+                if (title.Equals("EDTBX"))
+                    child.EDTBX++;
+                else if (title.Equals("ScrollBar"))
+                    child.ScrollBar++;
+                else
+                    return false;
+
+                return true;
+            }, IntPtr.Zero);
+
+            if (child.ScrollBar == 1 && child.EDTBX == 5)
+              return true;
+
+            return false;
         }
         #endregion
 

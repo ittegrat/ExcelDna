@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -497,13 +498,11 @@ namespace ExcelDna.Integration
         }
 
         // The call to LPenHelper will cause an AccessViolation after Excel starts shutting down.
-        // .NET40: If this library is recompiled to target .NET 4+, we need to add an attribute to indicate that this exception 
-        // (which might indicate corrupted state) should be handled in our code.
-        // For now, we target .NET 2.0, and even when running under .NET 4.0 we'll see the exception and be able to handle is.
-        // See: http://msdn.microsoft.com/en-us/magazine/dd419661.aspx
+        // NOTE .NET5+: If this assembly is run under .NET 5+ we need to re-engineer this call to handle possible access violations outside the managed code,
+        // or figure out the source and timing of safe vs dangerous calls.
         // (Also for CheckExcelApiAvailable())
 
-        // [HandleProcessCorruptedStateExceptions]
+        [HandleProcessCorruptedStateExceptions]
         static int CallPenHelper(int wCode, ref XlCall.FmlaInfo fmlaInfo)
         {
             try
@@ -519,35 +518,23 @@ namespace ExcelDna.Integration
 
         static bool IsInFormulaEditMode()
         {
-            // I assume LPenHelper is available under Excel 2007+
-            if (ExcelDnaUtil.ExcelVersion >= 12.0)
+            // check edit state directly
+            var fmlaInfo = new XlCall.FmlaInfo();
+
+            // If Excel is shutting down, CallPenHelper will throw an InvalidOperationException.
+            var result = CallPenHelper(XlCall.xlGetFmlaInfo, ref fmlaInfo);
+            if (result == 0)
             {
-                // check edit state directly
-                var fmlaInfo = new XlCall.FmlaInfo();
-
-                // If Excel is shutting down, CallPenHelper will throw an InvalidOperationException.
-                var result = CallPenHelper(XlCall.xlGetFmlaInfo, ref fmlaInfo);
-                if (result == 0)
-                {
-                    // Succeeded
-                    return fmlaInfo.wPointMode != XlCall.xlModeReady;
-                }
+                // Succeeded
+                return fmlaInfo.wPointMode != XlCall.xlModeReady;
             }
-
-            // Otherwise try Focus windows check, else menu check.
-            IntPtr focusedWindow = GetFocus();
-            if (focusedWindow == IntPtr.Zero)
+            else
             {
-                // Excel (this thread) does not have the keyboard focus. Use the Menu check instead.
-                bool menuEnabled = IsFileOpenMenuEnabled();
-                // Debug.Print("Menus Enabled: " + menuEnabled);
-                return !menuEnabled;
+                // Log and return true (the safer option) ???
+                // Error for now, but maybe Warn is safe too.
+                Logger.Registration.Error("IsInFormulaEditMode - PenHelper failed, result " + result);
+                return true;
             }
-
-            string className = GetWindowClassName(focusedWindow);
-            // Debug.Print("Focused window class: " + className);
-
-            return className == "EXCEL<" || className == "EXCEL6";
         }
         #endregion
     }

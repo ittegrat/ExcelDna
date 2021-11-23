@@ -1,0 +1,37 @@
+﻿<Project>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <TargetFrameworks>net5.0-windows</TargetFrameworks>
+    <HostArch>x86</HostArch>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\ExcelDna.Integration\ExcelDna.Integration.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="ExcelDna.Test-AddIn.dna">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <PropertyGroup>
+      <HostBuildPath>$(SolutionDir)ExcelDna.Host\bin\$(ConfigurationName)\$(HostArch)\</HostBuildPath>
+    </PropertyGroup>
+    <Exec Command="xcopy /y $(HostBuildPath)ExcelDna.Host.$(HostArch).xll $(TargetDir)ExcelDna.Test-AddIn.xll*" />
+    <Exec Command="xcopy /y $(HostBuildPath)ExcelDna.Host.runtimeconfig.json $(TargetDir)" />
+    <Exec Command="xcopy /y $(HostBuildPath)ExcelDna.ManagedHost.* $(TargetDir)" />
+    <Exec Command="xcopy /y $(HostBuildPath)ExcelDna.Loader.* $(TargetDir)" />
+    <Exec Command="xcopy /y $(HostBuildPath)ExcelDna.Integration.* $(TargetDir)" />
+  </Target>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <CleanDependsOn>$(CleanDependsOn);Restore;</CleanDependsOn>
+  </PropertyGroup>
+
+</Project>

@@ -92,7 +92,7 @@ namespace ExcelDna.Integration
 
 	[AttributeUsage(AttributeTargets.Parameter, Inherited = false, AllowMultiple = false)]
 	[MeansImplicitUse]
-	public class ExcelArgumentAttribute : Attribute
+    public class ExcelArgumentAttribute : Attribute
 	{
 		public string Name = null;
 		public string Description = null;
@@ -110,7 +110,7 @@ namespace ExcelDna.Integration
 
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
 	[MeansImplicitUse]
-	public class ExcelCommandAttribute : Attribute
+    public class ExcelCommandAttribute : Attribute
 	{
 		public string Prefix = null;
 		public string Name = null;

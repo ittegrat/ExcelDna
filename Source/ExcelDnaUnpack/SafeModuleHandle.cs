@@ -21,13 +21,17 @@ namespace ExcelDnaUnpack
       : base(IntPtr.Zero, true) { }
 
     public override bool IsInvalid {
+#if NETFRAMEWORK
       [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
       [PrePrepareMethod]
+#endif
       get { return (handle == IntPtr.Zero); }
     }
 
+#if NETFRAMEWORK
     [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
     [PrePrepareMethod]
+#endif
     protected override bool ReleaseHandle() {
       return NativeMethods.FreeLibrary(handle);
     }

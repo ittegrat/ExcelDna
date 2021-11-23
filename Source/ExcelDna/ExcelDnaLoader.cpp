@@ -28,7 +28,6 @@ static TempFileHolder tempConfig;
 // Forward declarations for functions defined in this file.
 HRESULT LoadClr(std::wstring clrVersion, ICorRuntimeHost **ppHost);
 HRESULT LoadClrMeta(std::wstring clrVersion, ICLRMetaHost* pMetaHost, ICorRuntimeHost **ppHost);
-HRESULT LoadClr20(ICorRuntimeHost **ppHost);
 
 _COM_SMARTPTR_TYPEDEF(ICorRuntimeHost, IID_ICorRuntimeHost);
 EXTERN_GUID(IID__Assembly,	0x17156360, 0x2f1a, 0x384a, 0xbc, 0x52, 0xfd, 0xe9, 0x3c, 0x21, 0x5c, 0x5b);
@@ -39,15 +38,15 @@ _COM_SMARTPTR_TYPEDEF(_Type, IID__Type);
 _COM_SMARTPTR_TYPEDEF(ICLRMetaHost, IID_ICLRMetaHost);
 _COM_SMARTPTR_TYPEDEF(ICLRRuntimeInfo, IID_ICLRRuntimeInfo);
 
-HRESULT LoadAppDomain(ICorRuntimeHostPtr pHost, std::wstring addInFullPath, bool createSandboxedAppDomain, bool shadowCopyFiles, _AssemblyPtr& loaderAssembly, _AppDomainPtr& addInAppDomain, bool& unloadAppDomain);
+HRESULT LoadAppDomain(ICorRuntimeHostPtr pHost, std::wstring addInFullPath, bool createSandboxedAppDomain, bool cancelAddInIsolation, bool shadowCopyFiles, _AssemblyPtr& loaderAssembly, _AppDomainPtr& addInAppDomain, bool& unloadAppDomain);
 HRESULT LoadLoaderIntoAppDomain(_AppDomainPtr& pAppDomain, _AssemblyPtr& pLoaderAssembly, bool forceFromBytes);
 void ShowMessage(int headerId, int bodyId, int footerId, HRESULT hr = S_OK);
 HRESULT CreateTempFile(void* pBuffer, DWORD nBufSize, std::wstring& fileName);
 HRESULT DeleteTempFile(std::wstring fileName);
 
-HRESULT GetClrOptions(std::wstring& clrVersion, bool& shadowCopyFiles, bool& createSandboxedAppDomain);
+HRESULT GetClrOptions(std::wstring& clrVersion, bool& shadowCopyFiles, bool& createSandboxedAppDomain, bool& cancelAddInIsolation);
 HRESULT GetDnaHeader(bool showErrors, std::wstring& header);
-HRESULT ParseDnaHeader(std::wstring header, std::wstring& addInName, std::wstring& runtimeVersion, bool& shadowCopyFiles, std::wstring& createSandboxedAppDomain);
+HRESULT ParseDnaHeader(std::wstring header, std::wstring& addInName, std::wstring& runtimeVersion, bool& shadowCopyFiles, std::wstring& createSandboxedAppDomain, bool& cancelAddInIsolation);
 HRESULT GetAttributeValue(std::wstring tag, std::wstring attributeName, std::wstring& attributeValue);
 
 BOOL IsRunningOnCluster();
@@ -88,25 +87,26 @@ bool XlLibraryInitialize(XlAddInExportInfo* pExportInfo)
 	std::wstring clrVersion;
 	bool shadowCopyFiles;
 	bool createSandboxedAppDomain;
+	bool cancelAddInIsolation;
 	
-	hr = GetClrOptions(clrVersion, shadowCopyFiles, createSandboxedAppDomain);
+	hr = GetClrOptions(clrVersion, shadowCopyFiles, createSandboxedAppDomain, cancelAddInIsolation);
 	if (FAILED(hr))
 	{
 		// SelectClrVersion shows diagnostic MessageBoxes if needed.
 		// Perhaps remember that we are not loaded?
 		return 0;
 	}
-#ifdef _M_X64
+
 	bool allowedVersion = CompareNoCase(clrVersion, L"v4.0") >= 0;
 	if (!allowedVersion)
 	{
-		ShowMessage(IDS_MSG_HEADER_64NET4, 
-					IDS_MSG_BODY_64NET4,
+		ShowMessage(IDS_MSG_HEADER_NET4, 
+					IDS_MSG_BODY_NET4,
 					IDS_MSG_FOOTER_ENSUREVERSION,
 					hr);
 		return 0;
 	}
-#endif
+
 	hr = LoadClr(clrVersion, &pHost);
 	if (FAILED(hr) || pHost == NULL)
 	{
@@ -119,7 +119,7 @@ bool XlLibraryInitialize(XlAddInExportInfo* pExportInfo)
 	hr = pHost->Start();
 	if (FAILED(hr))
 	{
-		ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
+		ShowMessage(IDS_MSG_HEADER_NEEDCLR45, 
 					IDS_MSG_BODY_HOSTSTART,
 					IDS_MSG_FOOTER_UNEXPECTED,
 					hr);
@@ -132,7 +132,7 @@ bool XlLibraryInitialize(XlAddInExportInfo* pExportInfo)
 	_AssemblyPtr pLoaderAssembly;
 	bool unloadAppDomain;
 
-	hr = LoadAppDomain(pHost, addInFullPath, createSandboxedAppDomain, shadowCopyFiles, pLoaderAssembly, pAppDomain, unloadAppDomain);
+	hr = LoadAppDomain(pHost, addInFullPath, createSandboxedAppDomain, cancelAddInIsolation, shadowCopyFiles, pLoaderAssembly, pAppDomain, unloadAppDomain);
 	if (FAILED(hr))
 	{
 		// Message already shown by LoadAppDomain
@@ -140,7 +140,7 @@ bool XlLibraryInitialize(XlAddInExportInfo* pExportInfo)
 	}
 
 	_TypePtr pXlAddInType;
-	hr = pLoaderAssembly->GetType_2(_bstr_t(L"ExcelDna.Loader.XlAddIn"), &pXlAddInType);
+	hr = pLoaderAssembly->GetType_2(_bstr_t(L"ExcelDna.ManagedHost.AddInInitialize"), &pXlAddInType);
 	if (FAILED(hr) || pXlAddInType == NULL)
 	{
 		ShowMessage(IDS_MSG_HEADER_APPDOMAIN, 
@@ -245,18 +245,10 @@ HRESULT LoadClr(std::wstring clrVersion, ICorRuntimeHost **ppHost)
 	{
 		// No .Net installed
 		// CONSIDER: Doing explicit checking according to http://support.microsoft.com/kb/318785
-		if (needNet40)
-		{
-				ShowMessage(IDS_MSG_HEADER_NEEDCLR40, 
-					IDS_MSG_BODY_LOADMSCOREE, 
-					IDS_MSG_FOOTER_ENSURECLR40 );
-		}
-		else
-		{
-				ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-					IDS_MSG_BODY_LOADMSCOREE, 
-					IDS_MSG_FOOTER_ENSURECLR20 );
-		}
+		
+		ShowMessage(IDS_MSG_HEADER_NEEDCLR45, 
+			IDS_MSG_BODY_LOADMSCOREE, 
+			IDS_MSG_FOOTER_ENSURECLR45 );
 		hr = E_FAIL;
 	}
 	else
@@ -264,44 +256,23 @@ HRESULT LoadClr(std::wstring clrVersion, ICorRuntimeHost **ppHost)
 		pfnCLRCreateInstance CLRCreateInstance = (pfnCLRCreateInstance)GetProcAddress(hMscoree, "CLRCreateInstance");
 		if (CLRCreateInstance == 0)
 		{
-			// Certainly no .Net 4 installed
-			if (needMetaHost)
-			{
-				// We need .Net 4.0 but it is not installed
-				ShowMessage(IDS_MSG_HEADER_NEEDCLR40, 
-							IDS_MSG_BODY_NOCLRCREATEINSTANCE, 
-							IDS_MSG_FOOTER_ENSURECLR40 );
-				hr = E_FAIL;
-			}
-			else
-			{
-				// We need only .Net 2.0 runtime and cannot MetaHost.
-				// Load .Net 2.0 with old code path
-				hr = LoadClr20(ppHost);
-			}
+			// We need .Net 4.0 but it is not installed
+			ShowMessage(IDS_MSG_HEADER_NEEDCLR45, 
+						IDS_MSG_BODY_NOCLRCREATEINSTANCE, 
+						IDS_MSG_FOOTER_ENSURECLR45 );
+			hr = E_FAIL;
 		}
 		else
 		{
 			hr = CLRCreateInstance(CLSID_CLRMetaHost, IID_ICLRMetaHost, (LPVOID*)&pMetaHost);
 			if (FAILED(hr))
 			{
-				// MetaHost is not available, even though we have a new version of MSCorEE.dll
-				// Certainly no .Net 4 installed
-				if (needMetaHost)
-				{
-					// We need .Net 4.0 but it is not installed
-					ShowMessage(IDS_MSG_HEADER_NEEDCLR40, 
-								IDS_MSG_BODY_CLRCREATEINSTANCEFAILED, 
-								IDS_MSG_FOOTER_ENSURECLR40, 
-								hr );
-					hr = E_FAIL;
-				}
-				else
-				{
-					// We need only .Net 2.0 runtime and cannot MetaHost.
-					// Load .Net 2.0 with old code path
-					hr = LoadClr20(ppHost);
-				}
+				// We need .Net 4.0 but it is not installed
+				ShowMessage(IDS_MSG_HEADER_NEEDCLR45, 
+							IDS_MSG_BODY_CLRCREATEINSTANCEFAILED, 
+							IDS_MSG_FOOTER_ENSURECLR45, 
+							hr );
+				hr = E_FAIL;
 			}
 			else
 			{
@@ -344,7 +315,7 @@ HRESULT LoadClrMeta(std::wstring clrVersion, ICLRMetaHost* pMetaHost, ICorRuntim
 		if (FAILED(hr))
 		{
 			// Not sure why this would happen???
-			ShowMessage( needNet40 ? IDS_MSG_HEADER_NEEDCLR40 : IDS_MSG_HEADER_NEEDCLR20, 
+			ShowMessage( IDS_MSG_HEADER_NEEDCLR45,
 						IDS_MSG_BODY_RUNTIMEGETINTERFACEFAILED, 
 						IDS_MSG_FOOTER_UNEXPECTED,
 						hr);
@@ -360,130 +331,16 @@ HRESULT LoadClrMeta(std::wstring clrVersion, ICLRMetaHost* pMetaHost, ICorRuntim
 	return hr;
 }
 
-// Try to get the CLR 2.0 running - .Net 4+ MetaHost stuff not present.
-HRESULT LoadClr20(ICorRuntimeHost **ppHost)
-{
-	HRESULT hr = E_FAIL;
-	HMODULE hMscoree = NULL;
-
-	hMscoree = LoadLibrary(L"mscoree.dll");
-	if (hMscoree == 0)
-	{
-		ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-					IDS_MSG_BODY_LOADMSCOREE, 
-					IDS_MSG_FOOTER_ENSURECLR20 );
-		hr = E_FAIL;
-	}
-	else
-	{
-		// Load the runtime
-		pfnCorBindToRuntimeEx CorBindToRuntimeEx = (pfnCorBindToRuntimeEx)GetProcAddress(hMscoree, "CorBindToRuntimeEx");
-		if (CorBindToRuntimeEx == 0)
-		{
-			ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-						IDS_MSG_BODY_NOCORBIND, 
-						IDS_MSG_FOOTER_UNEXPECTED );
-			hr = E_FAIL;
-		}
-		else
-		{
-			// Attempt to load a runtime that is compatible with the release version of .Net 2.0.
-			hr = CorBindToRuntimeEx(L"v2.0.50727", L"wks", NULL, CLSID_CorRuntimeHost, IID_ICorRuntimeHost, (LPVOID*)ppHost);
-			if (FAILED(hr))
-			{
-				// Could not load the right version
-				// Check whether version 2 is installed
-				if (!DetectFxIsNet20Installed())
-				{
-					ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-								IDS_MSG_BODY_NONET20,
-								IDS_MSG_FOOTER_ENSURECLR20,
-								hr);
-					hr = E_FAIL;
-				}
-				else
-				{
-					// Check whether a version is already running
-					if (GetModuleHandle(L"mscorwks") != NULL)
-					{
-						ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-									IDS_MSG_BODY_OLDVERSION,
-									IDS_MSG_FOOTER_OLDVERSION);
-						hr = E_FAIL;
-					}
-					else
-					{
-						ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-							IDS_MSG_BODY_CORBINDFAILED, 
-							IDS_MSG_FOOTER_ENSURECLR20ANDLOAD, 
-							hr);						
-						//// Unknown load failure
-						//ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-						//			IDS_MSG_BODY_UNKNOWNLOADFAIL,
-						//			IDS_MSG_FOOTER_UNEXPECTED);
-						hr = E_FAIL;
-					}
-				}
-				//hr = E_FAIL;
-			}
-			else
-			{
-				// Check the version that is now loaded ...
-				pfnGetCORVersion GetCORVersion = (pfnGetCORVersion)GetProcAddress(hMscoree, "GetCORVersion");
-				if (GetCORVersion == 0)
-				{
-					ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-								IDS_MSG_BODY_NOCORVERSION, 
-								IDS_MSG_FOOTER_UNEXPECTED );
-					hr = E_FAIL;
-				}
-				else
-				{
-					// Display current runtime loaded
-					WCHAR szVersion[MAX_PATH + 1];
-					DWORD dwLength = MAX_PATH;
-					hr = GetCORVersion(szVersion, dwLength, &dwLength);
-					if (FAILED(hr))
-					{
-						ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-									IDS_MSG_BODY_CORVERSIONFAILED, 
-									IDS_MSG_FOOTER_UNEXPECTED,
-									hr);
-						hr = E_FAIL;
-					}
-					else
-					{
-						if ( DetectFxReadMajorVersion(szVersion) < 2 )
-						{
-							// The version is no good.
-							ShowMessage(IDS_MSG_HEADER_NEEDCLR20, 
-										IDS_MSG_BODY_WRONGVERSIONLOADED, 
-										IDS_MSG_FOOTER_REVIEWADDINS);
-							hr = E_FAIL;
-						}
-						else
-						{
-							hr = S_OK;
-						}
-					}
-				}
-			}
-		}
-		FreeLibrary(hMscoree);
-	}
-	return hr;
-}
-
-HRESULT LoadAppDomain(ICorRuntimeHostPtr pHost, std::wstring addInFullPath, bool createSandboxedAppDomain, bool shadowCopyFiles, _AssemblyPtr& pLoaderAssembly , _AppDomainPtr& pAppDomain, bool& unloadAppDomain)
+HRESULT LoadAppDomain(ICorRuntimeHostPtr pHost, std::wstring addInFullPath, bool createSandboxedAppDomain, bool cancelAddInIsolation, bool shadowCopyFiles, _AssemblyPtr& pLoaderAssembly , _AppDomainPtr& pAppDomain, bool& unloadAppDomain)
 {
 	HRESULT hr;
 	std::wstring xllDirectory = addInFullPath;
 	RemoveFileSpecFromPath(xllDirectory);
 	unloadAppDomain = false;
 
-	if (IsRunningOnCluster())
+	if (cancelAddInIsolation || IsRunningOnCluster())
 	{
-		// Need to load into default AppDomain due to configuration issues of the cluster host.
+		// Need to load into default AppDomain
 		IUnknown *pAppDomainUnk = NULL;
 		hr = pHost->CurrentDomain(&pAppDomainUnk);
 		if (FAILED(hr) || pAppDomainUnk == NULL)
@@ -600,7 +457,7 @@ HRESULT LoadAppDomain(ICorRuntimeHostPtr pHost, std::wstring addInFullPath, bool
 	if (createSandboxedAppDomain)
 	{
 		_TypePtr pAppDomainHelperType;
-		hr = pLoaderAssembly->GetType_2(_bstr_t(L"ExcelDna.Loader.AppDomainHelper"), &pAppDomainHelperType);
+		hr = pLoaderAssembly->GetType_2(_bstr_t(L"ExcelDna.ManagedHost.AppDomainHelper"), &pAppDomainHelperType);
 		if (FAILED(hr) || pAppDomainHelperType == NULL)
 		{
 			ShowMessage(IDS_MSG_HEADER_APPDOMAIN, 
@@ -651,13 +508,13 @@ HRESULT LoadLoaderIntoAppDomain(_AppDomainPtr& pAppDomain, _AssemblyPtr& pLoader
 	if (!forceFromBytes)
 	{
 		// Try regular load first 
-		hr = pAppDomain->Load_2(_bstr_t(L"ExcelDna.Loader"), &pLoaderAssembly);
+		hr = pAppDomain->Load_2(_bstr_t(L"ExcelDna.ManagedHost"), &pLoaderAssembly);
 	}
 
 	if (forceFromBytes || FAILED(hr) || pLoaderAssembly == NULL)
 	{
 		// Now try from resource bytes
-		HRSRC hResInfoLoader = FindResource(hModuleCurrent, L"EXCELDNA.LOADER", L"ASSEMBLY");
+		HRSRC hResInfoLoader = FindResource(hModuleCurrent, L"EXCELDNA.MANAGEDHOST", L"ASSEMBLY");
 		if (hResInfoLoader == NULL)
 		{
 			ShowMessage(IDS_MSG_HEADER_APPDOMAIN, 
@@ -871,11 +728,12 @@ HRESULT GetAddInName(std::wstring& addInName)
 	std::wstring clrVersion;
 	bool shadowCopyFiles;
 	std::wstring createSandboxedAppDomainValue;
+	bool cancelAddInIsolation;
 
 	hr = GetDnaHeader(false, header);	// Don't show errors here.
 	if (!FAILED(hr))
 	{
-		hr = ParseDnaHeader(header, addInName, clrVersion, shadowCopyFiles, createSandboxedAppDomainValue); // No errors yet.
+		hr = ParseDnaHeader(header, addInName, clrVersion, shadowCopyFiles, createSandboxedAppDomainValue, cancelAddInIsolation); // No errors yet.
 		if (FAILED(hr))
 		{
 			return E_FAIL;
@@ -899,7 +757,7 @@ HRESULT GetAddInName(std::wstring& addInName)
 //	"v2.0" -> "v2.0.50727"
 //	"v4.0" -> "v4.0.30319"
 
-HRESULT GetClrOptions(std::wstring& clrVersion, bool& shadowCopyFiles, bool& createSandboxedAppDomain)
+HRESULT GetClrOptions(std::wstring& clrVersion, bool& shadowCopyFiles, bool& createSandboxedAppDomain, bool& cancelAddInIsolation)
 {
 	HRESULT hr;
 	std::wstring header;
@@ -909,7 +767,7 @@ HRESULT GetClrOptions(std::wstring& clrVersion, bool& shadowCopyFiles, bool& cre
 	hr = GetDnaHeader(true, header);	// Errors will be shown in there.
 	if (!FAILED(hr))
 	{
-		hr = ParseDnaHeader(header, addInName, clrVersion, shadowCopyFiles, createSandboxedAppDomainValue); // No errors yet.
+		hr = ParseDnaHeader(header, addInName, clrVersion, shadowCopyFiles, createSandboxedAppDomainValue, cancelAddInIsolation); // No errors yet.
 		if (FAILED(hr))
 		{
 			// XML Parse error
@@ -946,7 +804,7 @@ HRESULT GetClrOptions(std::wstring& clrVersion, bool& shadowCopyFiles, bool& cre
 	return hr;
 }
 
-HRESULT ParseDnaHeader(std::wstring header, std::wstring& addInName, std::wstring& runtimeVersion, bool& shadowCopyFiles, std::wstring& createSandboxedAppDomain)
+HRESULT ParseDnaHeader(std::wstring header, std::wstring& addInName, std::wstring& runtimeVersion, bool& shadowCopyFiles, std::wstring& createSandboxedAppDomain, bool& cancelAddInIsolation)
 {
 	HRESULT hr;
 
@@ -1009,6 +867,26 @@ HRESULT ParseDnaHeader(std::wstring header, std::wstring& addInName, std::wstrin
 	{
 		createSandboxedAppDomain = L"";
 		hr = S_OK;
+	}
+
+	std::wstring cancelAddInIsolationValue;
+	hr = GetAttributeValue(rootTag, L"Unsafe_CancelAddInIsolation_Unsafe", cancelAddInIsolationValue);
+	if (FAILED(hr))
+	{
+		// Parse error
+		return E_FAIL;
+	}
+	if (hr == S_FALSE)
+	{
+		cancelAddInIsolation = false;
+		hr = S_OK;
+	}
+	else // attribute read OK
+	{
+		if (CompareNoCase(cancelAddInIsolationValue, L"true") == 0)
+			cancelAddInIsolation = true;
+		else
+			cancelAddInIsolation = false;
 	}
 
 	hr = GetAttributeValue(rootTag, L"Name", addInName);

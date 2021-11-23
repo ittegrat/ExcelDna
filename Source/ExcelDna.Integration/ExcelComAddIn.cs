@@ -22,7 +22,9 @@ namespace ExcelDna.Integration
     // or through Automation (3).
 
     [ComVisible(true)]
+#pragma warning disable CS0618 // Type or member is obsolete (but probably not forever)
     [ClassInterface(ClassInterfaceType.AutoDispatch)]
+#pragma warning restore CS0618 // Type or member is obsolete
     public class ExcelComAddIn : IDTExtensibility2
     {
         internal DnaLibrary DnaLibrary { get; set; }
@@ -96,7 +98,8 @@ namespace ExcelDna.Integration
                 // Use a stable Guid derived from the Xll Path (since Excel stores load-times and other info for every COM add-in loaded in the registry)
                 clsId = ExcelDnaUtil.XllGuid;
                 // and make the ProgId from this Guid - max 39 chars....
-                progId = "Dna." + clsId.ToString("N") + "." + loadedComAddIns.Count;
+                // Change from Dna.xxx.n to Dna_xxx_n to avoid McAfee bug that blocks registry writes with a "." anywhere
+                progId = "Dna_" + clsId.ToString("N") + "_" + loadedComAddIns.Count;
             }
             addIn.SetProgId(progId);
 

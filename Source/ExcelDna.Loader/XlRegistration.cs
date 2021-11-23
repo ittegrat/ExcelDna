@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Reflection;
+using ExcelDna.Integration;
 using ExcelDna.Loader.Logging;
 
 namespace ExcelDna.Loader
@@ -13,6 +15,7 @@ namespace ExcelDna.Loader
     public static class XlRegistration
     {
         static readonly List<XlMethodInfo> registeredMethods = new List<XlMethodInfo>();
+        static readonly HashSet<string> registeredNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // Optimization for our logging check
         static readonly List<string> addedShortCuts = new List<string>();
         
         // This list is just to give access to the registration details for UI enhancement.
@@ -31,7 +34,8 @@ namespace ExcelDna.Loader
 
         public static void RegisterMethodsWithAttributes(List<MethodInfo> methods, List<object> methodAttributes, List<List<object>> argumentAttributes)
         {
-            Register(methods, null,  methodAttributes, argumentAttributes);
+            List<XlMethodInfo> xlMethods = XlMethodInfo.ConvertToXlMethodInfos(methods, null, null, methodAttributes, argumentAttributes);
+            RegisterXlMethods(xlMethods);
         }
 
         public static void RegisterDelegatesWithAttributes(List<Delegate> delegates, List<object> methodAttributes, List<List<object>> argumentAttributes)
@@ -49,7 +53,14 @@ namespace ExcelDna.Loader
                 methods.Add(del.GetType().GetMethod("Invoke"));
                 targets.Add(del);
             }
-            Register(methods, targets, methodAttributes, argumentAttributes);
+            List<XlMethodInfo> xlMethods = XlMethodInfo.ConvertToXlMethodInfos(methods, targets, null, methodAttributes, argumentAttributes);
+            RegisterXlMethods(xlMethods);
+        }
+
+        public static void RegisterLambdaExpressionsWithAttributes(List<LambdaExpression> lambdaExpressions, List<object> methodAttributes, List<List<object>> argumentAttributes)
+        {
+            List<XlMethodInfo> xlMethods = XlMethodInfo.ConvertToXlMethodInfos(null, null, lambdaExpressions, methodAttributes, argumentAttributes);
+            RegisterXlMethods(xlMethods);
         }
 
         // To keep everything alive ???
@@ -67,10 +78,13 @@ namespace ExcelDna.Loader
             // TODO: Need to check that we are not marked as IsTreadSafe (for now)
 
             var rtdWrapperMethod = RtdWrapperHelper.GetRtdWrapperMethod();
-            Register(new List<MethodInfo> { rtdWrapperMethod },
+            var xlMethods = XlMethodInfo.ConvertToXlMethodInfos(
+                     new List<MethodInfo> { rtdWrapperMethod },
                      new List<object> { helper },
+                     null,
                      new List<object> { functionAttribute },
-                     new List<List<object>> { argumentAttributes }); 
+                     new List<List<object>> { argumentAttributes });
+            RegisterXlMethods(xlMethods); 
         }
 
         // This function provides access to the registration info from an IntelliSense provider.
@@ -109,15 +123,13 @@ namespace ExcelDna.Loader
             return result;
         }
 
-        static void Register(List<MethodInfo> methods, List<object> targets, List<object> methodAttributes, List<List<object>> argumentAttributes)
+        static void RegisterXlMethods(List<XlMethodInfo> xlMethods)
         {
-            Debug.Assert(targets == null || targets.Count == methods.Count);
-            Logger.Registration.Verbose("Registering {0} methods", methods.Count);
-            List<XlMethodInfo> xlMethods = XlMethodInfo.ConvertToXlMethodInfos(methods, targets, methodAttributes, argumentAttributes);
+            Logger.Registration.Verbose("Registering {0} methods", xlMethods.Count);
 
             // Sort by name in reverse order before registering - this is inspired by the article http://www.benf.org/excel/regcost/
             // Makes a small but measurable difference in the Excel registration calls
-            xlMethods.Sort(delegate (XlMethodInfo mi1, XlMethodInfo mi2) { return -string.CompareOrdinal(mi1.Name.ToLower(), mi2.Name.ToLower()); });
+            xlMethods.Sort((XlMethodInfo mi1, XlMethodInfo mi2) => -StringComparer.OrdinalIgnoreCase.Compare(mi1.Name, mi2.Name));
             xlMethods.ForEach(RegisterXlMethod);
             // Increment the registration version (safe to call a few times)
             registrationInfoVersion += 1.0;
@@ -130,19 +142,21 @@ namespace ExcelDna.Loader
             string exportedProcName = string.Format("f{0}", index);
 
             object[] registerParameters = GetRegisterParameters(mi, exportedProcName);
+            string registerName = (string)registerParameters[3];
 
-            if (registrationInfo.Exists(ri => ((string)ri[3]).Equals((string)registerParameters[3], StringComparison.OrdinalIgnoreCase)))
+            if (!registeredNames.Add(registerName))
             {
+                // Not added to the set of names, so it was already present
                 // This function will be registered with a name that has already been used (by this add-in)
                 if (mi.SuppressOverwriteError)
                 {
                     // Logged at Info level - to allow re-registration without error popup
-                    Logger.Registration.Info("Repeated function name: '{0}' - previous registration will be overwritten. ", registerParameters[3]);
+                    Logger.Registration.Info("Repeated function name: '{0}' - previous registration will be overwritten. ", registerName);
                 }
                 else
                 {
                     // This logged as an error, but the registration continues - the last function with the name wins, for backward compatibility.
-                    Logger.Registration.Error("Repeated function name: '{0}' - previous registration will be overwritten. ", registerParameters[3]);
+                    Logger.Registration.Error("Repeated function name: '{0}' - previous registration will be overwritten. ", registerName);
                 }
             }
             
@@ -152,7 +166,7 @@ namespace ExcelDna.Loader
                 object xlCallResult;
                 XlCallImpl.TryExcelImpl(XlCallImpl.xlfRegister, out xlCallResult, registerParameters);
                 Logger.Registration.Info("Register - XllPath={0}, ProcName={1}, FunctionType={2}, Name={3} - Result={4}",
-                            registerParameters[0], registerParameters[1], registerParameters[2], registerParameters[3],
+                            registerParameters[0], registerParameters[1], registerParameters[2], registerName,
                             xlCallResult);
                 if (xlCallResult is double)
                 {
@@ -187,7 +201,7 @@ namespace ExcelDna.Loader
             object xlCallResult;
 
             // Remove menus and ShortCuts
-            IntegrationHelpers.RemoveCommandMenus();
+            MenuManager.RemoveCommandMenus();
             UnregisterShortCuts();
 
             // Now take out the methods
@@ -204,7 +218,7 @@ namespace ExcelDna.Loader
                     // And Unregister the real function
                     XlCallImpl.TryExcelImpl(XlCallImpl.xlfUnregister, out xlCallResult, mi.RegisterId);
                     // I follow the advice from X-Cell website to get function out of Wizard (with fix from kh)
-                    XlCallImpl.TryExcelImpl(XlCallImpl.xlfRegister, out xlCallResult, XlAddIn.PathXll, "xlAutoRemove", "I", mi.Name, IntegrationMarshalHelpers.GetExcelMissingValue(), 2);
+                    XlCallImpl.TryExcelImpl(XlCallImpl.xlfRegister, out xlCallResult, XlAddIn.PathXll, "xlAutoRemove", "I", mi.Name, ExcelDna.Integration.ExcelMissing.Value, 2);
                     if (xlCallResult is double)
                     {
                         double fakeRegisterId = (double)xlCallResult;
@@ -222,7 +236,7 @@ namespace ExcelDna.Loader
             if (!string.IsNullOrEmpty(mi.MenuName) &&
                 !string.IsNullOrEmpty(mi.MenuText))
             {
-                IntegrationHelpers.AddCommandMenu(mi.Name, mi.MenuName, mi.MenuText, mi.Description, mi.ShortCut, mi.HelpTopic);
+                MenuManager.AddCommandMenu(mi.Name, mi.MenuName, mi.MenuText, mi.Description, mi.ShortCut, mi.HelpTopic);
             }
         }
 
