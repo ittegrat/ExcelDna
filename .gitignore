@@ -21,7 +21,6 @@ _libs_/
 [Rr]elease/
 [Dd]ebug64/
 [Rr]elease64/
-x64/
 build/
 [Bb]in/
 [Oo]bj/
@@ -174,3 +173,6 @@ $RECYCLE.BIN/
 .DS_Store
 /Source/Tests/ExcelDna.AddIn.Tasks.IntegrationTests.TestTarget/MultipleAddInBuild/MultipleAddInProjectOne.dll
 /Source/Tests/ExcelDna.AddIn.Tasks.IntegrationTests.TestTarget/MultipleAddInBuild/MultipleAddInProjectOne.pdb
+
+# Task Canvas
+*.TaskCanvasSL
