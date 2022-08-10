@@ -7,6 +7,10 @@
     <!-- <GenerateTypeLib>false</GenerateTypeLib> -->
     <!-- <TestRoot>$(ProjectDir)\Workbooks</TestRoot> -->
     <!-- <TestWorkbook>$(TestRoot)\$(DnaProjectName).xls[mx]</TestWorkbook> -->
+    <!-- <ExcelDnaBuild32>false</ExcelDnaBuild32> -->
+    <!-- <ExcelDnaBuild64>true</ExcelDnaBuild64> -->
+    <!-- <DnaSuffix32>32</DnaSuffix32> -->
+    <!-- <DnaSuffix64></DnaSuffix64> -->
   </PropertyGroup>
 
 </Project>

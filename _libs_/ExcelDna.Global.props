@@ -5,10 +5,11 @@
     <ExcelDnaSDK Condition="'$(ExcelDnaSDK)' == ''" >$(MSBuildThisFileDirectory)</ExcelDnaSDK>
   </PropertyGroup>
 
-  <!--<PropertyGroup Condition="'$(Configuration)' == 'Debug'">-->
   <PropertyGroup>
+    <ExcelArch>x64</ExcelArch>
     <StartAction>Program</StartAction>
-    <StartProgram>C:\Program Files %28x86%29\Microsoft Office\root\Office16\EXCEL.EXE</StartProgram>
+    <StartProgram Condition="'$(ExcelArch)' == 'x64'" >C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE</StartProgram>
+    <StartProgram Condition="'$(ExcelArch)' == 'x86'" >C:\Program Files %28x86%29\Microsoft Office\root\Office16\EXCEL.EXE</StartProgram>
   </PropertyGroup>
 
 </Project>
