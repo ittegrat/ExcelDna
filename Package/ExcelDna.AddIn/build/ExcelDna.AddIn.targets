@@ -160,7 +160,10 @@
       UnpackIsEnabled="$(ExcelDnaUnpack)"
       PackIsEnabled="$(RunExcelDnaPack)"
       PackedFileSuffix="$(ExcelDnaPackXllSuffix)"
+      Packed32BitXllName="$(ExcelDnaPack32BitXllName)"
+      Packed64BitXllName="$(ExcelDnaPack64BitXllName)"			
  	  AddInFileName="$(ExcelAddInFileName)"
+      PublishPath="$(ExcelDnaPublishPath)"
  	  ProjectName="$(MSBuildProjectName)">
     </CleanExcelAddIn>
   </Target>
@@ -187,6 +190,9 @@
     <Error Text="ExcelDna32BitAddInSuffix and ExcelDna64BitAddInSuffix cannot be identical. Fix your ExcelDna.Build.props file"
               Condition="'$(ExcelDna32BitAddInSuffix)' == '$(ExcelDna64BitAddInSuffix)'" />
 
+	<Error Text="The publish directory and the pack suffix can't both be blank."
+           Condition="('$(ExcelDnaPackXllSuffix)' == '%none%') AND ('$(ExcelDnaPublishPath)' == '%none%') AND ('$(RunExcelDnaPack)' == 'true')" />
+		
 	<Error Text="The target platform should specified as Windows in the project file. For example, &lt;TargetFramework&gt;net6.0-windows&lt;/TargetFramework&gt;." Condition="'$(TargetPlatformIdentifier)' != 'Windows'" />		
 
     <Warning Text="ExcelDnaCreate32BitAddIn and ExcelDnaCreate64BitAddIn are both 'false'. Nothing to do"
@@ -209,6 +215,9 @@
       UnpackIsEnabled="$(ExcelDnaUnpack)"
       PackIsEnabled="$(RunExcelDnaPack)"
       PackedFileSuffix="$(ExcelDnaPackXllSuffix)"
+      Packed32BitXllName="$(ExcelDnaPack32BitXllName)"
+      Packed64BitXllName="$(ExcelDnaPack64BitXllName)"
+      PublishPath="$(ExcelDnaPublishPath)"
  	  AddInName="$(ExcelAddInName)"
  	  AddInFileName="$(ExcelAddInFileName)"
  	  AddInInclude="$(ExcelAddInInclude)"
@@ -219,6 +228,7 @@
 	  TlbDscom="$(ExcelDnaTlbDscom)"
 	  TlbExp="$(ExcelAddInTlbExp)"
 	  TlbCreate="$(ExcelAddInTlbCreate)"
+	  UseVersionAsOutputVersion="$(ExcelAddInUseVersionAsOutputVersion)"
 	  IntegrationDllPath="$(ExcelDnaRuntimeToolsPath)ExcelDna.Integration.dll"
 	  TemplateDnaPath="$(MSBuildThisFileDirectory)..\content\ExcelDna-Template.dna">
       <Output TaskParameter="DnaFilesToPack" ItemName="ExcelDnaFilesToPack" />
@@ -257,6 +267,7 @@
   <Target Name="HideExcelDnaInteropEmbeddableAssemblies" AfterTargets="ResolveReferences" BeforeTargets="FindReferenceAssembliesForReferences">
 		<ItemGroup>
 			<ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.NuGetPackageId)' == 'ExcelDna.Interop'" />
+			<ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.NuGetPackageId)' == 'ExcelDna.Interop.Dao'" />
 		</ItemGroup>
   </Target>
 	

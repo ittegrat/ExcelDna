@@ -130,7 +130,7 @@ Other assemblies are packed if marked with Pack=""true"" in the .dna file.
                 }
             }
 
-            int result = ExcelDna.PackedResources.ExcelDnaPack.Pack(dnaPath, xllOutputPath, compress, multithreading, overwrite, usageInfo, x64);
+            int result = ExcelDna.PackedResources.ExcelDnaPack.Pack(dnaPath, xllOutputPath, compress, multithreading, overwrite, usageInfo, null, x64);
 
 #if DEBUG
             if (result == 0)

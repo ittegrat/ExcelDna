@@ -14,7 +14,6 @@ namespace ExcelDna.AddIn.Tasks
     {
         private readonly IBuildLogger _log;
         private readonly IExcelDnaFileSystem _fileSystem;
-        private List<ITaskItem> _packedFilesToDelete;
         private BuildTaskCommon _common;
 
         public CleanExcelAddIn()
@@ -43,13 +42,21 @@ namespace ExcelDna.AddIn.Tasks
                 _common = new BuildTaskCommon(FilesInProject, OutDirectory, FileSuffix32Bit, FileSuffix64Bit, ProjectName, AddInFileName);
 
                 var existingBuiltFiles = _common.GetBuildItemsForDnaFiles();
-                _packedFilesToDelete = GetPackedFilesToDelete(existingBuiltFiles);
+                List<ITaskItem> packedFilesToDelete = GetPackedFilesToDelete(existingBuiltFiles);
 
                 // Get the packed name versions : Refactor this + build items
                 DeleteAddInFiles(existingBuiltFiles);
-                DeletePackedAddInFiles(_packedFilesToDelete);
-                if (UnpackIsEnabled)
-                    DeleteUnpackedAddInFiles();
+
+                if (PackExcelAddIn.NoPublishPath(PublishPath))
+                {
+                    DeletePackedAddInFiles(packedFilesToDelete);
+                    if (UnpackIsEnabled)
+                        DeleteUnpackedAddInFiles();
+                }
+                else
+                {
+                    DeletePublishedFiles();
+                }
 
                 return true;
             }
@@ -88,29 +95,23 @@ namespace ExcelDna.AddIn.Tasks
 
             foreach (var item in existingBuiltFiles)
             {
-                packedFilesToDelete.Add(GetPackedFileNames(item.OutputDnaFileNameAs32Bit, item.OutputXllFileNameAs32Bit, item.OutputConfigFileNameAs32Bit));
-                packedFilesToDelete.Add(GetPackedFileNames(item.OutputDnaFileNameAs64Bit, item.OutputXllFileNameAs64Bit, item.OutputConfigFileNameAs64Bit));
+                packedFilesToDelete.Add(GetPackedFileNames(item.OutputDnaFileNameAs32Bit, item.OutputXllFileNameAs32Bit, item.OutputConfigFileNameAs32Bit, Packed32BitXllName));
+                packedFilesToDelete.Add(GetPackedFileNames(item.OutputDnaFileNameAs64Bit, item.OutputXllFileNameAs64Bit, item.OutputConfigFileNameAs64Bit, Packed64BitXllName));
             }
 
             return packedFilesToDelete;
         }
 
-        private TaskItem GetPackedFileNames(string outputDnaFileName, string outputXllFileName, string outputXllConfigFileName)
+        private TaskItem GetPackedFileNames(string outputDnaFileName, string outputXllFileName, string outputXllConfigFileName, string packedFileName)
         {
             var outputPackedDnaFileName = !string.IsNullOrWhiteSpace(PackedFileSuffix)
             ? Path.Combine(Path.GetDirectoryName(outputDnaFileName) ?? string.Empty,
                 Path.GetFileNameWithoutExtension(outputDnaFileName) + PackedFileSuffix + ".dna")
             : outputDnaFileName;
 
-            var outputPackedXllFileName = !string.IsNullOrWhiteSpace(PackedFileSuffix)
-              ? Path.Combine(Path.GetDirectoryName(outputXllFileName) ?? string.Empty,
-                  Path.GetFileNameWithoutExtension(outputXllFileName) + PackedFileSuffix + ".xll")
-              : outputXllFileName;
+            var outputPackedXllFileName = PackExcelAddIn.GetOutputPackedXllFileName(outputXllFileName, packedFileName, PackedFileSuffix, PackExcelAddIn.GetPublishDirectory(OutDirectory, PublishPath));
 
-            var outputPackedXllConfigFileName = !string.IsNullOrWhiteSpace(PackedFileSuffix)
-            ? Path.Combine(Path.GetDirectoryName(outputXllFileName) ?? string.Empty,
-                Path.GetFileNameWithoutExtension(outputXllFileName) + PackedFileSuffix + ".xll.config")
-            : outputXllConfigFileName;
+            var outputPackedXllConfigFileName = outputPackedXllFileName + ".config";
 
             var metadata = new Hashtable
             {
@@ -135,6 +136,13 @@ namespace ExcelDna.AddIn.Tasks
                 DeleteFileIfExists(item.OutputConfigFileNameAs32Bit);
                 DeleteFileIfExists(item.OutputConfigFileNameAs64Bit);
             }
+        }
+
+        private void DeletePublishedFiles()
+        {
+            string publishDir = PackExcelAddIn.GetPublishDirectory(OutDirectory, PublishPath);
+            if (Directory.Exists(publishDir))
+                Array.ForEach(Directory.GetFiles(publishDir), _fileSystem.DeleteFile);
         }
 
         private void DeletePackedAddInFiles(List<ITaskItem> filesToDelete)
@@ -217,13 +225,28 @@ namespace ExcelDna.AddIn.Tasks
         public bool PackIsEnabled { get; set; }
 
         /// <summary>
-        /// Enable/disable running ExcelDnaPack for .dna files
+        /// Packed add-in name suffix
         /// </summary>
         public string PackedFileSuffix { get; set; }
+
+        /// <summary>
+        /// Explicit 32-bit output file name
+        /// </summary>
+        public string Packed32BitXllName { get; set; }
+
+        /// <summary>
+        /// Explicit 64-bit output file name
+        /// </summary>
+        public string Packed64BitXllName { get; set; }
 
         /// <summary>
         /// Custom add-in file name
         /// </summary>
         public string AddInFileName { get; set; }
+
+        /// <summary>
+        /// The output directory for the 'published' add-in
+        /// </summary>
+        public string PublishPath { get; set; }
     }
 }

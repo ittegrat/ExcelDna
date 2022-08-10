@@ -49,6 +49,10 @@
     <!-- Default value: false -->
     <ExcelDnaUnpack></ExcelDnaUnpack>
 
+    <!-- The output directory for the 'published' add-in. Use %none% to put the files in the same output directory. -->
+    <!-- Default value: publish -->
+    <ExcelDnaPublishPath></ExcelDnaPublishPath>
+
     <!-- Enables creating 32bit add-in. -->
     <!-- Default value: true -->
     <ExcelDnaCreate32BitAddIn></ExcelDnaCreate32BitAddIn>
@@ -65,9 +69,17 @@
     <!-- Default value: 64 -->
     <ExcelDna64BitAddInSuffix></ExcelDna64BitAddInSuffix>
 
-    <!-- Packed add-in name suffix. -->
+    <!-- Packed add-in name suffix.  Use %none% to make the name of the packed output file be the same as the unpacked name. -->
     <!-- Default value: -packed -->
     <ExcelDnaPackXllSuffix></ExcelDnaPackXllSuffix>
+
+    <!-- Explicit 32bit output file name -->
+    <!-- Default value: empty -->
+    <ExcelDnaPack32BitXllName></ExcelDnaPack32BitXllName>
+
+    <!-- Explicit 64bit output file name -->
+    <!-- Default value: empty -->
+    <ExcelDnaPack64BitXllName></ExcelDnaPack64BitXllName>
 
     <!-- Enables packed add-in compression. -->
     <!-- Default value: true -->
@@ -120,6 +132,10 @@
     <!-- Options for signtool.exe. E.g. /f "$(MSBuildProjectDirectory)\Contoso.pfx" /p 12345678 -->
     <!-- Default value: empty -->
     <ExcelAddInSignOptions></ExcelAddInSignOptions>
+
+    <!-- Replace XLL version information with data read from ExternalLibrary assembly -->
+    <!-- Default value: false -->
+    <ExcelAddInUseVersionAsOutputVersion></ExcelAddInUseVersionAsOutputVersion>
 
     <!-- We don't need the extra 'ref' directory and reference assemblies for the Excel add-in -->
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>

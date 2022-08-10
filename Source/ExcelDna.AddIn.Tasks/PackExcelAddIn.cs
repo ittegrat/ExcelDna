@@ -2,6 +2,7 @@
 using Microsoft.Build.Framework;
 using ExcelDna.AddIn.Tasks.Logging;
 using ExcelDna.AddIn.Tasks.Utils;
+using System.IO;
 
 namespace ExcelDna.AddIn.Tasks
 {
@@ -28,7 +29,7 @@ namespace ExcelDna.AddIn.Tasks
             {
                 _log.Debug("Running PackExcelAddIn Task");
 
-                int result = ExcelDna.PackedResources.ExcelDnaPack.Pack(OutputDnaFileName, OutputPackedXllFileName, CompressResources, RunMultithreaded, true, null);
+                int result = ExcelDna.PackedResources.ExcelDnaPack.Pack(OutputDnaFileName, OutputPackedXllFileName, CompressResources, RunMultithreaded, true, null, null);
                 if (result != 0)
                     throw new ApplicationException($"Pack failed with exit code {result}.");
 
@@ -43,6 +44,40 @@ namespace ExcelDna.AddIn.Tasks
                 _log.Error(ex, ex.ToString());
                 return false;
             }
+        }
+
+        public static string GetOutputPackedXllFileName(string outputXllFileName, string packedFileName, string packedFileSuffix, string publishPath)
+        {
+            string outputPackedXllFileName = outputXllFileName;
+            if (string.IsNullOrWhiteSpace(packedFileName) && !string.IsNullOrWhiteSpace(packedFileSuffix))
+            {
+                if (IsNone(packedFileSuffix))
+                    packedFileSuffix = "";
+                packedFileName = Path.GetFileNameWithoutExtension(outputXllFileName) + packedFileSuffix;
+            }
+            if (!string.IsNullOrWhiteSpace(packedFileName))
+            {
+                outputPackedXllFileName = Path.Combine(publishPath, packedFileName + ".xll");
+            }
+            return outputPackedXllFileName;
+        }
+
+        public static bool NoPublishPath(string publishPath)
+        {
+            return IsNone(publishPath);
+        }
+
+        public static string GetPublishDirectory(string outDirectory, string publishPath)
+        {
+            if (NoPublishPath(publishPath))
+                return outDirectory;
+
+            return Path.Combine(outDirectory, publishPath ?? "publish");
+        }
+
+        private static bool IsNone(string s)
+        {
+            return string.Equals(s, "%none%", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
