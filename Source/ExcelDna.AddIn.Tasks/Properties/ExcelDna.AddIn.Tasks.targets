@@ -5,16 +5,6 @@
   </PropertyGroup>
 
   <!--
-    Extend the Clean target to call our ExcelDnaAddInTasksClean target
-  -->
-  <PropertyGroup>
-    <CleanDependsOn>
-      $(CleanDependsOn);
-      ExcelDnaAddInTasksClean;
-    </CleanDependsOn>
-  </PropertyGroup>
-
-  <!--
     Extend the AfterBuild target to call our ExcelDnaAddInTasksBuild target
   -->
   <PropertyGroup>
@@ -23,19 +13,6 @@
       ExcelDnaAddInTasksBuild;
     </BuildDependsOn>
   </PropertyGroup>
-
-  <!--
-    Target that removes all files previously copied to run the integration tests
-  -->
-  <Target Name="ExcelDnaAddInTasksClean">
-    <Message Text="Cleaning files previously copied to run the integration tests in $(ExcelDnaTestPackageDir)" Importance="High" />
-
-    <ItemGroup>
-      <ExcelDnaTestPackageFilesToDelete Include="$(ExcelDnaTestPackageDir)**\*.*" />
-    </ItemGroup>
-
-    <Delete Files="@(ExcelDnaTestPackageFilesToDelete)" TreatErrorsAsWarnings="true"/>
-  </Target>
 
   <!--
     Target that copies the necessary files to run the integration tests
@@ -52,16 +29,49 @@
           ContinueOnError="false" OverwriteReadOnlyFiles="true" SkipUnchangedFiles="true" />
 
     <ItemGroup>
-      <ExcelDnaTestFilesToCopyToTools Include="$(TargetDir)*" />
-      <ExcelDnaTestFilesToCopyToTools Include="$(ProjectDir)..\..\Distribution\ExcelDna.xll" />
-      <ExcelDnaTestFilesToCopyToTools Include="$(ProjectDir)..\..\Distribution\ExcelDna64.xll" />
-      <ExcelDnaTestFilesToCopyToTools Include="$(ProjectDir)..\..\Distribution\ExcelDna.Integration.dll" />
-      <ExcelDnaTestFilesToCopyToTools Include="$(ProjectDir)..\..\Distribution\ExcelDnaPack.exe" />
-      <ExcelDnaTestFilesToCopyToTools Include="$(ProjectDir)..\..\Distribution\ExcelDnaPack.exe.config" />
+      <ExcelDnaTestFilesToCopyToTools Include="$(TargetDir)..\**\*.*" />
     </ItemGroup>
 
     <Copy SourceFiles="@(ExcelDnaTestFilesToCopyToTools)"
           DestinationFolder="$(ExcelDnaTestPackageDir)tools\%(RecursiveDir)"
           ContinueOnError="false" OverwriteReadOnlyFiles="true" SkipUnchangedFiles="true" />
-  </Target>
+
+	<Copy 
+        Condition="Exists('$(ProjectDir)..\ExcelDna.Host\bin\$(Configuration)\x64\ExcelDna.Host.x64.xll')"
+        SourceFiles="$(ProjectDir)..\ExcelDna.Host\bin\$(Configuration)\x64\ExcelDna.Host.x64.xll"
+        DestinationFiles="$(ExcelDnaTestPackageDir)tools\net6.0-windows\ExcelDna64.xll"
+        ContinueOnError="false"
+        OverwriteReadOnlyFiles="true"
+        SkipUnchangedFiles="true" />
+
+	<Copy 
+		Condition="Exists('$(ProjectDir)..\ExcelDna.Host\bin\$(Configuration)\x86\ExcelDna.Host.x86.xll')"
+		SourceFiles="$(ProjectDir)..\ExcelDna.Host\bin\$(Configuration)\x86\ExcelDna.Host.x86.xll"
+		DestinationFiles="$(ExcelDnaTestPackageDir)tools\net6.0-windows\ExcelDna.xll"
+		ContinueOnError="false"
+		OverwriteReadOnlyFiles="true"
+		SkipUnchangedFiles="true" />
+
+	<Copy 
+		Condition="Exists('$(ProjectDir)..\ExcelDna\x64\$(Configuration)\ExcelDna64.xll')"
+		SourceFiles="$(ProjectDir)..\ExcelDna\x64\$(Configuration)\ExcelDna64.xll"
+		DestinationFiles="$(ExcelDnaTestPackageDir)tools\net452\ExcelDna64.xll"
+		ContinueOnError="false"
+		OverwriteReadOnlyFiles="true"
+		SkipUnchangedFiles="true" />
+
+	<Copy 
+		Condition="Exists('$(ProjectDir)..\ExcelDna\$(Configuration)\ExcelDna.xll')"
+		SourceFiles="$(ProjectDir)..\ExcelDna\$(Configuration)\ExcelDna.xll"
+		DestinationFiles="$(ExcelDnaTestPackageDir)tools\net452\ExcelDna.xll"
+		ContinueOnError="false"
+		OverwriteReadOnlyFiles="true"
+		SkipUnchangedFiles="true" />
+
+	<ItemGroup>
+		<ExcelDnaTestFilesToMove Include="$(ExcelDnaTestPackageDir)tools\net6.0-windows\*.*" />
+	</ItemGroup>
+	<Move SourceFiles="@(ExcelDnaTestFilesToMove)" DestinationFolder="$(ExcelDnaTestPackageDir)tools\net6.0-windows7.0" />
+
+	</Target>
 </Project>

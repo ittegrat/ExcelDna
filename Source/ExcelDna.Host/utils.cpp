@@ -1,6 +1,11 @@
 // This code was contributed by Koustubh Moharir (Thank you!)
 
 #include "utils.h"
+#include <windows.h>
+#include <tchar.h>
+#include <comdef.h>
+
+extern HMODULE hModuleCurrent;
 
 TempFileHolder::~TempFileHolder()
 {
@@ -71,6 +76,17 @@ SafeByteArray::~SafeByteArray()
 	SafeArrayDestroy(pArray);
 }
 
+int SafeByteArray::AccessData(byte** ppData)
+{
+	SafeArrayAccessData(pArray, (void**)ppData);
+	return pArray->rgsabound->cElements;
+}
+
+void SafeByteArray::UnaccessData()
+{
+	SafeArrayUnaccessData(pArray);
+}
+
 bool FileExists(LPCTSTR szPath)
 {
 	DWORD dwAttrib = GetFileAttributes(szPath);
@@ -83,7 +99,7 @@ std::wstring LoadStringFromResource(HMODULE hModule, int id)
 {
 	const wchar_t* buffer = nullptr;
 	LoadStringW(hModule, id, (LPWSTR)&buffer, 0);//ugly cast for badly designed API (specifying buffer size == 0 returns a read only pointer.
-	return std::wstring(buffer, *((WORD*) buffer - 1));//The WORD preceding the address is the size of the resource string. which is not null-terminated.
+	return std::wstring(buffer, *((WORD*)buffer - 1));//The WORD preceding the address is the size of the resource string. which is not null-terminated.
 }
 
 std::wstring FormatString(std::wstring formatString, ...)
@@ -180,4 +196,192 @@ std::wstring UTF8toUTF16(const std::string& utf8)
 		utf16.resize(len);
 	}
 	return utf16;
+}
+
+const byte* XorKeys = (byte*)"ExcelDna";
+int XorKeysLength = 8;
+
+void XorRecode(SafeByteArray& data)
+{
+	byte* pData;
+	int cbData = data.AccessData(&pData);
+	for (int i = 0; i < cbData; i++)
+	{
+		pData[i] = (byte)(XorKeys[i % XorKeysLength] ^ pData[i]);
+	}
+	data.UnaccessData();
+}
+
+HRESULT WriteAllBytes(const std::wstring& filePath, void* buf, DWORD size)
+{
+	HANDLE hFile = CreateFile(filePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+		return HResultFromLastError();
+
+	DWORD dwBytesWritten;
+	if (!WriteFile(hFile, buf, size, &dwBytesWritten, NULL))
+	{
+		HRESULT hr = HResultFromLastError();
+		CloseHandle(hFile);
+		return hr;
+	}
+
+	if (!CloseHandle(hFile))
+		return HResultFromLastError();
+
+	return S_OK;
+}
+
+std::wstring PathCombine(const std::wstring& path1, const std::wstring& path2)
+{
+	return path1 + L"\\" + path2;
+}
+
+std::wstring PathCombine(const std::wstring& path1, const std::wstring& path2, const std::wstring& path3)
+{
+	return PathCombine(PathCombine(path1, path2), path3);
+}
+
+BOOL IsRunningOnCluster()
+{
+	// Our check is to see if the current process is called Excel.exe.
+	// Hopefully this doen't change soon.
+
+	TCHAR hostPathName[MAX_PATH];
+	DWORD count = GetModuleFileName(NULL, hostPathName, MAX_PATH);
+
+	std::wstring hostPath = hostPathName;
+	StripPath(hostPath);
+
+	if (CompareNoCase(hostPath, L"EXCEL.EXE") == 0)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+struct FindExcelWindowParam
+{
+	DWORD processId;
+	HWND  hwndFound;
+};
+
+BOOL WINAPI FindExcelWindowCallback(HWND hwnd, LPARAM lParam)
+{
+	FindExcelWindowParam* pParam = (FindExcelWindowParam*)lParam;
+	DWORD processId = 0;
+	GetWindowThreadProcessId(hwnd, &processId);
+	if (processId == pParam->processId)
+	{
+		wchar_t className[11];
+		DWORD count = RealGetWindowClass(hwnd, className, 10);
+		if (_tcsncmp(className, L"XLMAIN", 6))
+		{
+			pParam->hwndFound = hwnd;
+			SetLastError(0);
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+HWND FindCurrentExcelWindow()
+{
+	FindExcelWindowParam param;
+	param.processId = GetCurrentProcessId();
+	param.hwndFound = NULL;
+
+	EnumWindows(FindExcelWindowCallback, (LPARAM)&param);
+	return param.hwndFound;
+}
+
+void ShowMessageError(HWND hwndParent)
+{
+	MessageBox(hwndParent, L"There was problem while loading the add-in. \r\nA detailed message could not be displayed.", L"Add-In Loader", MB_ICONEXCLAMATION);
+}
+
+void ShowMessage(int headerId, int bodyId, int footerId, HRESULT hr)
+{
+	if (IsRunningOnCluster())
+	{
+		// TODO: Consider what to do in cluster context?
+		return;
+	}
+
+	HWND hwndExcel = FindCurrentExcelWindow();
+	try
+	{
+		std::wstring  addInFullPath = GetAddInFullPath();
+		std::wstring  addInFileName = addInFullPath;
+		StripPath(addInFileName);
+
+		std::wstring msgTitle = FormatString(LoadStringFromResource(hModuleCurrent, IDS_MSG_TITLE), addInFileName.c_str());
+
+		std::wstring header = LoadStringFromResource(hModuleCurrent, headerId);
+		std::wstring body = LoadStringFromResource(hModuleCurrent, bodyId);
+		std::wstring footer = LoadStringFromResource(hModuleCurrent, footerId);
+
+		std::wstring hresult = L"";
+		if (hr != S_OK)
+		{
+			_com_error error(hr);
+			hresult = FormatString(LoadStringFromResource(hModuleCurrent, IDS_MSG_HRESULT), error.ErrorMessage());
+		}
+
+		std::wstring msg = FormatString(LoadStringFromResource(hModuleCurrent, IDS_MSG_TEMPLATE), header.c_str(), body.c_str(), footer.c_str(), hresult.c_str(), addInFullPath.c_str());
+		MessageBox(hwndExcel, msg.c_str(), msgTitle.c_str(), MB_ICONEXCLAMATION);
+	}
+	catch (...)
+	{
+		ShowMessageError(hwndExcel);
+	}
+}
+
+std::wstring GetAddInFullPath()
+{
+	wchar_t buffer[MAX_PATH];
+	DWORD count = GetModuleFileName(hModuleCurrent, buffer, MAX_PATH);
+	return std::wstring(buffer);
+}
+
+BOOL IsBufferUTF8(BYTE* buffer, DWORD bufferLength)
+{
+	// Only UTF-8 and UTF-16 is supported (here)
+	// The check here is naive - does not read the xml processing instruction.
+	// CONSIDER: Use WIN32 API function IsTextUnicode ?
+
+	// Check for byte order marks.
+	if (bufferLength < 3)
+	{
+		// Doesn't matter - will fail later.
+		return true;
+	}
+	if (buffer[0] == 0xEF && buffer[1] == 0xBB && buffer[2] == 0xBF)
+	{
+		// Standard UTF-8 BOM
+		return true;
+	}
+	//if (buffer[0] == 0xFF && buffer[1] == 0xFE && buffer[2] == 0x00 && buffer[3] == 0x00)
+	//{
+	//	// UTF-32 LE
+	//	return false;
+	//}
+	//if (buffer[0] == 0x00 && buffer[1] == 0x00 && buffer[2] == 0xFE && buffer[3] == 0xFF)
+	//{
+	//	// UTF-32 BE
+	//	return false;
+	//}
+	if (buffer[0] == 0xFF && buffer[1] == 0xFE)
+	{
+		// UTF-16 LE
+		return false;
+	}
+	if (buffer[0] == 0xFE && buffer[1] == 0xFF)
+	{
+		// UTF-16 BE
+		return false;
+	}
+	// Might be ANSI or some other code page. Treated as UTF-8 here.
+	return true;
 }

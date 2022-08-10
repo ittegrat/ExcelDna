@@ -1,11 +1,14 @@
 <Project>
+
+	<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../../'))" Condition="exists($([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../../')))"/>
+	
 	<PropertyGroup>
 
 		<Product>Excel-DNA Add-In Framework for Microsoft Excel</Product>
-		<Copyright>Copyright © 2005-2021 Govert van Drimmelen</Copyright>
-		<Version>1.5.1.0</Version>
-		<FileVersion>1.5.1.0</FileVersion>
-		<InformationalVersion>1.5.1.0 (ittegrat)</InformationalVersion>
+		<Copyright>Copyright © 2005-2022 Govert van Drimmelen</Copyright>
+		<Version>1.6.0.0</Version>
+		<FileVersion>1.6.0.0</FileVersion>
+		<InformationalVersion>1.6.0.0-preview4 (ittegrat)</InformationalVersion>
 
 		<LibDistFolder>$(SolutionDir)..\_libs_</LibDistFolder>
 

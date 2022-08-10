@@ -5,8 +5,8 @@
   <PropertyGroup>
     
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net452;net5.0-windows</TargetFrameworks>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <TargetFrameworks>net452</TargetFrameworks>
+    <RuntimeIdentifiers>win7-x86;win7-x64</RuntimeIdentifiers>
     
     <AssemblyTitle>ExcelDnaPack</AssemblyTitle>
     <Description>Excel-DNA Packing Tool</Description>
@@ -14,14 +14,12 @@
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\assets\exceldna.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Include="..\Lzma\**\*.cs" LinkBase="Lzma" />
-  </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\ExcelDna.Integration\ExcelDna.Integration.csproj" />
   </ItemGroup>
+
+  <Import Project="..\ExcelDna.PackedResources\ExcelDna.PackedResources.projitems" Label="Shared" />
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net452' And '$(Configuration)' == 'Release'">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LibDistFolder)" />

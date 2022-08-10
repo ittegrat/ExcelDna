@@ -13,8 +13,8 @@ namespace ExcelDna.ManagedHost
         readonly AssemblyDependencyResolver _resolver;
 
 
-        public ExcelDnaAssemblyLoadContext(string basePath) 
-            : base($"ExcelDnaAssemblyLoadContext_{Path.GetFileNameWithoutExtension(basePath)}", isCollectible: true)
+        public ExcelDnaAssemblyLoadContext(string basePath, bool isCollectible)
+            : base($"ExcelDnaAssemblyLoadContext_{Path.GetFileNameWithoutExtension(basePath)}", isCollectible: isCollectible)
         {
             _basePath = basePath;
             _resolver = new AssemblyDependencyResolver(basePath);
@@ -37,7 +37,7 @@ namespace ExcelDna.ManagedHost
             }
 
             // Finally we try the AssemblyManager
-            return AssemblyManager.AssemblyResolve(assemblyName);
+            return AssemblyManager.AssemblyResolve(assemblyName, false);
         }
 
         protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)

@@ -3,9 +3,9 @@
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
-    
+
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net452;net5.0-windows</TargetFrameworks>
+    <TargetFrameworks>net452</TargetFrameworks>
     <PlatformTarget>AnyCPU</PlatformTarget>
 
     <AssemblyTitle>ExcelDnaUnpack</AssemblyTitle>
@@ -18,13 +18,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Lzma\**\*.cs" LinkBase="Lzma" />
+    <Compile Include="..\ExcelDna.PackedResources\Lzma\*.cs" LinkBase="Lzma" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net452' And '$(Configuration)' == 'Release'">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LibDistFolder)" />
   </Target>
- 
+
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
