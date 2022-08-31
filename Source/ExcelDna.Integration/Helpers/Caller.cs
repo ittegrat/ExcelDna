@@ -1,3 +1,4 @@
+using System;
 
 namespace ExcelDna.Integration.Helpers
 {
@@ -43,8 +44,6 @@ namespace ExcelDna.Integration.Helpers
 
     public readonly string Label;
 
-    public delegate string CustomMessage(bool checkCols, int desired, int actual);
-
     public Caller() {
 
       object caller = XlCall.Excel(XlCall.xlfCaller);
@@ -71,14 +70,13 @@ namespace ExcelDna.Integration.Helpers
     public bool IsString { get { return Type == CallerType.String; } }
     public bool IsRefError { get { return Type == CallerType.RefError; } }
 
-    public bool TooSmall(bool checkCols, int desired, out string msg) {
-      return TooSmall(checkCols, desired, out msg, null);
-    }
-    public bool TooSmall(bool checkCols, int desired, out string msg, CustomMessage CustomMessage) {
+    public bool TooSmall(bool checkCols, int desired, out string msg, Func<bool, int, int, string> CustomMessage = null) {
       if (Type == Caller.CallerType.Range) {
         int i = checkCols ? Columns : Rows;
         if (i < desired) {
-          msg = ((CustomMessage == null) ? ((checkCols ? "#COLS" : "#ROWS") + "{" + desired + "}") : CustomMessage(checkCols, desired, i));
+          msg = CustomMessage == null
+            ? $"{(checkCols ? "#COLS" : "#ROWS")}{{{desired}}}"
+            : CustomMessage(checkCols, desired, i);
           return true;
         }
       }
