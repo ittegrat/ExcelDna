@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -20,39 +21,41 @@ namespace ExcelDnaUnpack
       LOAD_WITH_ALTERED_SEARCH_PATH = 0x00000008
     }
 
-    [DllImport("Kernel32.dll", SetLastError = true)]
-    public static extern IntPtr BeginUpdateResource(string lpFileName, [MarshalAs(UnmanagedType.Bool)]bool bDeleteExistingResources);
+    const string KERNEL32_DLL = "Kernel32.dll";
 
-    [DllImport("Kernel32.dll", SetLastError = true)]
+    [DllImport(KERNEL32_DLL, CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern IntPtr BeginUpdateResource(string lpFileName, [MarshalAs(UnmanagedType.Bool)] bool bDeleteExistingResources);
+
+    [DllImport(KERNEL32_DLL, CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static extern bool EndUpdateResource(IntPtr hUpdate, [MarshalAs(UnmanagedType.Bool)]bool fDiscard);
+    public static extern bool EndUpdateResource(IntPtr hUpdate, [MarshalAs(UnmanagedType.Bool)] bool fDiscard);
 
     public delegate bool EnumResTypeProc(IntPtr hModule, IntPtr lpszType, IntPtr lParam);
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    [DllImport(KERNEL32_DLL, CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool EnumResourceTypes(SafeModuleHandle hModule, EnumResTypeProc lpEnumFunc, IntPtr lParam);
 
     public delegate bool EnumResNameProc(IntPtr hModule, IntPtr lpszType, IntPtr lpszName, IntPtr lParam);
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    [DllImport(KERNEL32_DLL, CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool EnumResourceNames(SafeModuleHandle hModule, string lpType, EnumResNameProc lpEnumFunc, IntPtr lParam);
 
-    [DllImport("Kernel32.dll", SetLastError = true)]
+    [DllImport(KERNEL32_DLL, CharSet = CharSet.Unicode, SetLastError = true)]
     public static extern IntPtr FindResource(SafeModuleHandle hModule, string lpName, string lpType);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
+    [DllImport(KERNEL32_DLL, CharSet = CharSet.Unicode, SetLastError = true)]
     public static extern SafeModuleHandle LoadLibraryEx(string lpFileName, IntPtr hFile, LoadLibraryFlags dwFlags);
 
-    [DllImport("Kernel32.dll", SetLastError = true)]
+    [DllImport(KERNEL32_DLL, SetLastError = true)]
     public static extern IntPtr LoadResource(SafeModuleHandle hModule, IntPtr hResource);
 
-    [DllImport("Kernel32.dll")]
+    [DllImport(KERNEL32_DLL)]
     public static extern IntPtr LockResource(IntPtr hResData);
 
-    [DllImport("Kernel32.dll", SetLastError = true)]
+    [DllImport(KERNEL32_DLL, SetLastError = true)]
     public static extern uint SizeofResource(SafeModuleHandle hModule, IntPtr hResource);
 
-    [DllImport("Kernel32.dll", SetLastError = true)]
+    [DllImport(KERNEL32_DLL, CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool UpdateResource(IntPtr hUpdate, string lpType, string lpName, ushort wLanguage, IntPtr lpData, uint cb);
 
@@ -81,7 +84,7 @@ namespace ExcelDnaUnpack
         IntPtr.Zero
       );
 
-      if (!ans) ThrowLastError();
+      if (!ans) throw new Win32Exception();
 
       foreach (var key in resources.Keys) {
         var rl = resources[key];
@@ -118,7 +121,7 @@ namespace ExcelDnaUnpack
       File.Copy(FileName, outFileName, true);
 
       IntPtr h = NativeMethods.BeginUpdateResource(outFileName, false);
-      if (h == IntPtr.Zero) ThrowLastError();
+      if (h == IntPtr.Zero) throw new Win32Exception();
 
       bool ans = false;
       try {
@@ -138,7 +141,7 @@ namespace ExcelDnaUnpack
             Console.WriteLine($"  - {r.Type} - {r.Name}");
 
             ans = NativeMethods.UpdateResource(h, r.Type, r.Name, 0, IntPtr.Zero, 0);
-            if (!ans) ThrowLastError();
+            if (!ans) throw new Win32Exception();
 
           }
         }
@@ -149,7 +152,7 @@ namespace ExcelDnaUnpack
       }
 
       ans = NativeMethods.EndUpdateResource(h, !ans);
-      if (!ans) ThrowLastError();
+      if (!ans) throw new Win32Exception();
 
     }
     public void Extract(ResourceType rt, string basePath, bool overwrite, bool mksubfolders) {
@@ -222,17 +225,17 @@ namespace ExcelDnaUnpack
     public byte[] GetResourceBytes(string type, string name) {
 
       var rh = NativeMethods.FindResource(safeModuleHandle, name, type);
-      if (rh == IntPtr.Zero) ThrowLastError();
+      if (rh == IntPtr.Zero) throw new Win32Exception();
 
       var ph = NativeMethods.LoadResource(safeModuleHandle, rh);
-      if (ph == IntPtr.Zero) ThrowLastError();
+      if (ph == IntPtr.Zero) throw new Win32Exception();
 
       var ptr = NativeMethods.LockResource(ph);
       if (ptr == IntPtr.Zero)
         throw new ApplicationException($"Invalid pointer from LockResource");
 
       var sz = NativeMethods.SizeofResource(safeModuleHandle, rh);
-      if (sz == 0) ThrowLastError();
+      if (sz == 0) throw new Win32Exception();
 
       var bytes = new byte[sz];
       Marshal.Copy(ptr, bytes, 0, (int)sz);
@@ -289,8 +292,15 @@ namespace ExcelDnaUnpack
         NativeMethods.LoadLibraryFlags.LOAD_LIBRARY_AS_DATAFILE | NativeMethods.LoadLibraryFlags.LOAD_LIBRARY_AS_IMAGE_RESOURCE
       );
 
-      if (safeModuleHandle.IsInvalid)
-        ThrowLastError();
+      if (safeModuleHandle.IsInvalid) {
+        var err = Marshal.GetLastWin32Error();
+        switch (err) {
+          case 193:
+            throw new Win32Exception(err, $"{Path.GetFileName(fileName)} is not a valid Win32 application.");
+          default:
+            throw new Win32Exception(err);
+        }
+      }
 
       return safeModuleHandle;
 
@@ -310,7 +320,7 @@ namespace ExcelDnaUnpack
         IntPtr.Zero
       );
 
-      if (!ans) ThrowLastError();
+      if (!ans) throw new Win32Exception();
 
       return true;
 
@@ -338,10 +348,6 @@ namespace ExcelDnaUnpack
         return $"#{value}";
       }
       return Marshal.PtrToStringUni(value);
-    }
-    static void ThrowLastError() {
-      //** throw new System.ComponentModel.Win32Exception();
-      Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
     }
 
   }

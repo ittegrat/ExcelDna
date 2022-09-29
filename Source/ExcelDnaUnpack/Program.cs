@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Reflection;
 
 //** TODO
@@ -110,9 +111,13 @@ namespace ExcelDnaUnpack
         }
 
       }
+      catch (Win32Exception ex) {
+        Environment.ExitCode = ex.NativeErrorCode;
+        Console.WriteLine($"System Error {ex.NativeErrorCode}");
+        Console.WriteLine(ex.Message);
+      }
       catch (Exception ex) {
-        Environment.ExitCode = 1;
-        //** Beautify error message
+        Environment.ExitCode = -1;
         Console.WriteLine(ex.Message);
       }
 
