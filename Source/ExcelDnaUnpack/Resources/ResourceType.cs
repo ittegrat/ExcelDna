@@ -15,7 +15,8 @@ namespace ExcelDnaUnpack
     PDB = 0x20,
     SOURCE = 0x40,
     TYPELIB = 0x80,
-    KNOWN = ASSEMBLY | CONFIG | DNA | IMAGE | PDB | SOURCE | TYPELIB,
+    VERSION = 0x100,
+    KNOWN = ASSEMBLY | CONFIG | DNA | IMAGE | PDB | SOURCE | TYPELIB | VERSION,
     ALL = KNOWN | UNKNOWN
   }
 
@@ -51,6 +52,9 @@ namespace ExcelDnaUnpack
 
         case "TYPELIB":
           return ResourceType.TYPELIB;
+
+        case "#16":
+          return ResourceType.VERSION;
 
         default:
           return ResourceType.UNKNOWN;

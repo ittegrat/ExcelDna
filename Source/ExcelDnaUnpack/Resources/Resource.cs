@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using SevenZip.Compression.LZMA;
 
@@ -7,7 +8,7 @@ namespace ExcelDnaUnpack
   internal abstract partial class Resource : IComparable<Resource>
   {
 
-    Module module;
+    readonly Module module;
 
     public static Resource Create(ResourceType rt, Module module, string type, string name) {
 
@@ -30,10 +31,18 @@ namespace ExcelDnaUnpack
     public static string GetSubFolder(ResourceType rt) {
       return rt.ToString();
     }
+    public static string[] GetVersionInfo(List<Resource> resList) {
+      if (!(resList.Find(r => ((Version)r).IsFVI) is Version fvi))
+        return new string[] { "[ERROR] No suitable VERSIONINFO resource found." };
+      return fvi.GetVersionInfo();
+    }
 
     public string Type { get; }
     public string Name { get; }
     public ResourceType ResourceType { get; }
+
+    public virtual string BeautyType { get { return Type; } }
+    public virtual string BeautyName { get { return Name; } }
 
     public int CompareTo(Resource other) {
 

@@ -6,14 +6,14 @@ using System.Reflection;
 //** MAYBE
 // - overwrite make a clean extract ?
 // - beautify resource names (problem: packing flattens tree and discards info)
-// - Extract some types of unknown resources (version, strings, ...)
+// - Extract some types of unknown resources (strings, ...)
 
 namespace ExcelDnaUnpack
 {
   class Program
   {
 
-    enum Command { None, Clean, Extract, List, Help }
+    enum Command { None, Clean, Extract, List, Version, Help }
 
     static void Main(string[] args) {
 
@@ -77,6 +77,10 @@ namespace ExcelDnaUnpack
               mksubfolders = true;
               break;
 
+            case "-v":
+              command = Command.Version;
+              break;
+
             default:
               throw new ArgumentException($"Invalid option: {args[i]}");
 
@@ -97,6 +101,8 @@ namespace ExcelDnaUnpack
         using (var module = new Module(fileName)) {
           if (command == Command.List)
             module.List(rTypes);
+          else if (command == Command.Version)
+            module.PrintVersion();
           else if (command == Command.Clean)
             module.Clean(outPath, overwrite);
           else
@@ -106,6 +112,7 @@ namespace ExcelDnaUnpack
       }
       catch (Exception ex) {
         Environment.ExitCode = 1;
+        //** Beautify error message
         Console.WriteLine(ex.Message);
       }
 
@@ -141,6 +148,9 @@ namespace ExcelDnaUnpack
             break;
           case 't':
             ans |= ResourceType.TYPELIB;
+            break;
+          case 'v':
+            ans |= ResourceType.VERSION;
             break;
           case 'u':
             ans |= ResourceType.UNKNOWN;
@@ -199,6 +209,7 @@ Options:
   --list-all: List all resources
   -o DIRECTORY: output directory
   -s: create subfolders
+  -v: print addin's version info
   -x[.]: eXtract resources, where [.] is one or more resource codes
 
 Resource codes:
@@ -209,6 +220,7 @@ Resource codes:
   p: pdbs
   s: sources
   t: typelibs
+  v: version
   u: unknown
 
 ", logo, name);

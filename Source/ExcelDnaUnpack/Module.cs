@@ -61,20 +61,19 @@ namespace ExcelDnaUnpack
   internal sealed class Module : IDisposable
   {
 
-    readonly string fileName;
     readonly Dictionary<ResourceType, List<Resource>> resources = new Dictionary<ResourceType, List<Resource>>();
-    readonly Dictionary<string, List<string>> resourceNames = new Dictionary<string, List<string>>();
-
     readonly SafeModuleHandle safeModuleHandle;
+
+    public string FileName { get; }
 
     public Module(string fName) {
 
-      fileName = Path.GetFullPath(fName);
+      FileName = Path.GetFullPath(fName);
 
-      if (!File.Exists(fileName))
-        throw new ArgumentException($"Invalid xll file path: {fileName}");
+      if (!File.Exists(FileName))
+        throw new ArgumentException($"Invalid xll file path: {FileName}");
 
-      safeModuleHandle = LoadModule(fileName);
+      safeModuleHandle = LoadModule(FileName);
 
       var ans = NativeMethods.EnumResourceTypes(
         safeModuleHandle,
@@ -100,23 +99,23 @@ namespace ExcelDnaUnpack
     public void Clean(string basePath, bool overwrite) {
 
       if (basePath == null)
-        basePath = Path.GetDirectoryName(fileName);
+        basePath = Path.GetDirectoryName(FileName);
 
       var outFileName = Path.Combine(
         basePath,
-        Path.ChangeExtension(Path.GetFileName(fileName), ".Cleaned.xll")
+        Path.ChangeExtension(Path.GetFileName(FileName), ".Cleaned.xll")
       );
 
       if (!overwrite && File.Exists(outFileName))
         throw new ApplicationException($"Cleaned file '{outFileName}' exist.\nUse -f to force overwriting.");
 
       Console.WriteLine("Cleaning resources:\n");
-      Console.WriteLine($"  Addin: {fileName}");
+      Console.WriteLine($"  Addin: {FileName}");
       Console.WriteLine($"  Clean: {outFileName}");
       Console.WriteLine();
 
       Directory.CreateDirectory(basePath);
-      File.Copy(fileName, outFileName, true);
+      File.Copy(FileName, outFileName, true);
 
       IntPtr h = NativeMethods.BeginUpdateResource(outFileName, false);
       if (h == IntPtr.Zero) ThrowLastError();
@@ -128,6 +127,9 @@ namespace ExcelDnaUnpack
           foreach (var r in rl) {
 
             if (r.ResourceType == ResourceType.UNKNOWN)
+              continue;
+
+            if (r.ResourceType == ResourceType.VERSION)
               continue;
 
             if (r.Name == "EXCELDNA.LOADER" || r.Name == "EXCELDNA.INTEGRATION")
@@ -153,16 +155,16 @@ namespace ExcelDnaUnpack
     public void Extract(ResourceType rt, string basePath, bool overwrite, bool mksubfolders) {
 
       if (basePath == null)
-        basePath = Path.ChangeExtension(fileName, null);
+        basePath = Path.ChangeExtension(FileName, null);
 
-      if (basePath == fileName)
+      if (basePath == FileName)
         throw new ApplicationException($"Invalid output folder '{basePath}'.\nUse -o to set the output folder.");
 
       if (!overwrite && Directory.Exists(basePath))
         throw new ApplicationException($"Output folder '{basePath}' exist.\nUse -f to force extraction.");
 
       Console.WriteLine("Extracting resources:\n");
-      Console.WriteLine($"  Addin: {fileName}");
+      Console.WriteLine($"  Addin: {FileName}");
       Console.WriteLine($"  OutPath: {basePath}");
       Console.WriteLine();
 
@@ -193,11 +195,27 @@ namespace ExcelDnaUnpack
     public void List(ResourceType rt) {
 
       Console.WriteLine("Listing resources:\n");
-      Console.WriteLine($"  Addin: {fileName}");
+      Console.WriteLine($"  Addin: {FileName}");
 
       foreach (var kv in resources) {
         if (rt.HasFlag(kv.Key))
           PrintResources(kv.Value);
+      }
+
+    }
+    public void PrintVersion() {
+
+      Console.WriteLine("Reading version info:\n");
+      Console.WriteLine($"  Addin: {FileName}\n");
+
+      if (!resources.TryGetValue(ResourceType.VERSION, out var rl)) {
+        Console.WriteLine($"  [ERROR] No VERSIONINFO resource found.");
+        return;
+      }
+
+      var lines = Resource.GetVersionInfo(rl);
+      foreach (var line in lines) {
+        Console.WriteLine($"  {line}");
       }
 
     }
@@ -238,7 +256,7 @@ namespace ExcelDnaUnpack
 
           var bytes = r.GetBytes();
 
-          Console.WriteLine($"  + {r.Type} - {r.Name}");
+          Console.WriteLine($"  + {r.BeautyType} - {r.BeautyName}");
 
           using (var fs = new FileStream(outFile, FileMode.Create)) {
             fs.Write(bytes, 0, bytes.Length);
@@ -257,10 +275,9 @@ namespace ExcelDnaUnpack
       foreach (var r in resList) {
         if (!r.Type.Equals(resType)) {
           resType = r.Type;
-          Console.WriteLine($"\n  {BautifyType(resType)}");
+          Console.WriteLine($"\n  {r.BeautyType}");
         }
-        //** MAYBE: beautify name ?
-        Console.WriteLine($"    {r.Name}");
+        Console.WriteLine($"    {r.BeautyName}");
       }
     }
 
@@ -321,21 +338,6 @@ namespace ExcelDnaUnpack
         return $"#{value}";
       }
       return Marshal.PtrToStringUni(value);
-    }
-    static string BautifyType(string type) {
-
-      if (type[0] != '#')
-        return type;
-
-      switch (type) {
-        case "#6":
-          return "#6 - RT_STRING";
-        case "#16":
-          return "#16 - RT_VERSION";
-        default:
-          return type;
-      }
-
     }
     static void ThrowLastError() {
       //** throw new System.ComponentModel.Win32Exception();
