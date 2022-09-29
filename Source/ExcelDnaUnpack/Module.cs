@@ -67,6 +67,7 @@ namespace ExcelDnaUnpack
     readonly Dictionary<ResourceType, List<Resource>> resources = new Dictionary<ResourceType, List<Resource>>();
     readonly SafeModuleHandle safeModuleHandle;
 
+    public bool Decode { get; private set; }
     public string FileName { get; }
 
     public Module(string fName) {
@@ -155,7 +156,12 @@ namespace ExcelDnaUnpack
       if (!ans) throw new Win32Exception();
 
     }
-    public void Extract(ResourceType rt, string basePath, bool overwrite, bool mksubfolders) {
+    public void Extract(ResourceType rt, bool? decode, string basePath, bool overwrite, bool mksubfolders) {
+
+      if (decode.HasValue)
+        Decode = decode.Value;
+      else
+        Decode = IsEncoded();
 
       if (basePath == null)
         basePath = Path.ChangeExtension(FileName, null);
@@ -282,6 +288,15 @@ namespace ExcelDnaUnpack
         }
         Console.WriteLine($"    {r.BeautyName}");
       }
+    }
+    bool IsEncoded() {
+      if (resources.TryGetValue(ResourceType.VERSION, out var rl)) {
+        if (Resource.GetVersion(rl) is Version ver) {
+          var refver = new Version(1, 6, 0, 0);
+          return ver >= refver;
+        }
+      }
+      throw new InvalidOperationException($"Packed files encoding can't be automatically detected\nUse -d to force decoding.");
     }
 
     SafeModuleHandle LoadModule(string fileName) {

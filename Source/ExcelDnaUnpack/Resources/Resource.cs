@@ -31,6 +31,10 @@ namespace ExcelDnaUnpack
     public static string GetSubFolder(ResourceType rt) {
       return rt.ToString();
     }
+    public static System.Version GetVersion(List<Resource> resList) {
+      var fvi = resList.Find(r => ((Version)r).IsFVI) as Version;
+      return fvi?.GetVersion();
+    }
     public static string[] GetVersionInfo(List<Resource> resList) {
       if (!(resList.Find(r => ((Version)r).IsFVI) is Version fvi))
         return new string[] { "[ERROR] No suitable VERSIONINFO resource found." };
@@ -73,12 +77,17 @@ namespace ExcelDnaUnpack
 
     public virtual byte[] GetBytes() {
 
-      var bytes = module.GetResourceBytes(Type, Name);
+      var rbytes = module.GetResourceBytes(Type, Name);
 
-      return IsCompressed()
-        ? SevenZipHelper.Decompress(bytes)
-        : bytes
+      var bytes = IsCompressed()
+        ? SevenZipHelper.Decompress(rbytes)
+        : rbytes
       ;
+
+      if (module.Decode)
+        XorRecode(bytes);
+
+      return bytes;
 
     }
     public virtual string GetFileName() { return Name; }
@@ -92,6 +101,14 @@ namespace ExcelDnaUnpack
       this.module = module;
       Type = type;
       Name = name;
+    }
+
+    static readonly byte[] xorKeys = System.Text.Encoding.ASCII.GetBytes("ExcelDna");
+    static void XorRecode(byte[] data) {
+      var keys = xorKeys;
+      for (int i = 0; i < data.Length; i++) {
+        data[i] = (byte)(keys[i % keys.Length] ^ data[i]);
+      }
     }
 
   }

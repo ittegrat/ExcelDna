@@ -29,6 +29,14 @@ namespace ExcelDnaUnpack
         return bytes;
       }
       public override string GetFileName() { return "VersionInfo.txt"; }
+      public System.Version GetVersion() {
+        return new System.Version(
+          fvi.FileMajorPart,
+          fvi.FileMinorPart,
+          fvi.FileBuildPart,
+          fvi.FilePrivatePart
+        );
+      }
       public string[] GetVersionInfo() {
         return new string[] {
           $"FileDescription: {fvi.FileDescription}",

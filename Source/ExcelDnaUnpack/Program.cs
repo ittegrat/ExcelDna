@@ -24,6 +24,7 @@ namespace ExcelDnaUnpack
         string outPath = null;
         Command command = Command.None;
         ResourceType rTypes = ResourceType.NONE;
+        bool? decode = null;
         bool overwrite = false;
         bool mksubfolders = false;
 
@@ -52,6 +53,10 @@ namespace ExcelDnaUnpack
 
             case "-c":
               command = Command.Clean;
+              break;
+
+            case "-d":
+              decode = args[i].Length < 3;
               break;
 
             case "-f":
@@ -107,7 +112,7 @@ namespace ExcelDnaUnpack
           else if (command == Command.Clean)
             module.Clean(outPath, overwrite);
           else
-            module.Extract(rTypes, outPath, overwrite, mksubfolders);
+            module.Extract(rTypes, decode, outPath, overwrite, mksubfolders);
         }
 
       }
@@ -208,6 +213,7 @@ Usage: {1} [options...] file
 
 Options:
   -c: clean all known resources
+  -d[x]: force [no] decode
   -f: overwrite existing files
   -h, --help: print this help
   -l[.]: List resources, where [.] is one or more resource codes
