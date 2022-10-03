@@ -35,7 +35,7 @@ VALUE "InternalName", "ExcelDna"
 VALUE "LegalCopyright", "Copyright (C) 2005-2022 Govert van Drimmelen"
 VALUE "OriginalFilename", "ExcelDna.xll"
 VALUE "ProductName", "Excel-DNA Add-In Framework for Microsoft Excel"
-VALUE "ProductVersion", VER_FILEVERSION_STR "-preview5 (ittegrat)"
+VALUE "ProductVersion", VER_FILEVERSION_STR " (ittegrat)"
 END
 END
 BLOCK "VarFileInfo"
