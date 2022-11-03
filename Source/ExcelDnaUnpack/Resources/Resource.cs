@@ -41,6 +41,12 @@ namespace ExcelDnaUnpack
       return fvi.GetVersionInfo();
     }
 
+    public static bool IsEncoded(Resource res) {
+      if (!(res is Assembly asm))
+        throw new InvalidCastException($"Invalid resource type: expected 'ASSEMBLY', got '{res.ResourceType}'.");
+      return asm.IsEncoded();
+    }
+
     public string Type { get; }
     public string Name { get; }
     public ResourceType ResourceType { get; }
@@ -75,6 +81,9 @@ namespace ExcelDnaUnpack
 
     }
 
+    public virtual bool IsCompressed() {
+      return Type.EndsWith("_LZMA");
+    }
     public virtual byte[] GetBytes() {
 
       var rbytes = module.GetResourceBytes(Type, Name);
@@ -91,10 +100,6 @@ namespace ExcelDnaUnpack
 
     }
     public virtual string GetFileName() { return Name; }
-
-    protected virtual bool IsCompressed() {
-      return Type.EndsWith("_LZMA");
-    }
 
     Resource(ResourceType rt, string type, string name, Module module) {
       ResourceType = rt;

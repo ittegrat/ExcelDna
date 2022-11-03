@@ -66,6 +66,7 @@ namespace ExcelDnaUnpack
 
     readonly Dictionary<ResourceType, List<Resource>> resources = new Dictionary<ResourceType, List<Resource>>();
     readonly SafeModuleHandle safeModuleHandle;
+    readonly Version dnaVersion;
 
     public bool Decode { get; private set; }
     public string FileName { get; }
@@ -93,6 +94,12 @@ namespace ExcelDnaUnpack
           rl.Sort();
         else
           resources.Remove(key);
+      }
+
+      if (resources.TryGetValue(ResourceType.VERSION, out var vl)) {
+        if (Resource.GetVersion(vl) is Version ver) {
+          dnaVersion = ver;
+        }
       }
 
     }
@@ -175,6 +182,9 @@ namespace ExcelDnaUnpack
       Console.WriteLine("Extracting resources:\n");
       Console.WriteLine($"  Addin: {FileName}");
       Console.WriteLine($"  OutPath: {basePath}");
+      if (dnaVersion != null)
+        Console.WriteLine($"  ExcelDna: v{dnaVersion}");
+      Console.WriteLine($"  XorRecode: {(Decode ? "enabled" : "disabled")}");
       Console.WriteLine();
 
       foreach (var kv in resources) {
@@ -205,6 +215,8 @@ namespace ExcelDnaUnpack
 
       Console.WriteLine("Listing resources:\n");
       Console.WriteLine($"  Addin: {FileName}");
+      if (dnaVersion != null)
+        Console.WriteLine($"  ExcelDna: v{dnaVersion}");
 
       foreach (var kv in resources) {
         if (rt.HasFlag(kv.Key))
@@ -290,13 +302,11 @@ namespace ExcelDnaUnpack
       }
     }
     bool IsEncoded() {
-      if (resources.TryGetValue(ResourceType.VERSION, out var rl)) {
-        if (Resource.GetVersion(rl) is Version ver) {
-          var refver = new Version(1, 6, 0, 0);
-          return ver >= refver;
-        }
+      if (resources.TryGetValue(ResourceType.ASSEMBLY, out var rl)) {
+        var nc = rl.Find(r => !r.IsCompressed());
+        return Resource.IsEncoded(nc ?? rl[0]);
       }
-      throw new InvalidOperationException($"Packed files encoding can't be automatically detected\nUse -d to force decoding.");
+      throw new InvalidOperationException($"No ASSEMBLY resource packed. Encoding can't be automatically detected\nUse -d to force decoding.");
     }
 
     SafeModuleHandle LoadModule(string fileName) {
