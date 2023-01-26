@@ -62,18 +62,24 @@
     <DnaMasterProject Condition="'$(DnaMasterProject)' == ''" >$(DnaProjectName)</DnaMasterProject>
 
     <DnaProjectFile64 Condition="Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).$(Configuration).dna')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).$(Configuration).dna</DnaProjectFile64>
-    <DnaProjectFile64 Condition="'$(DnaProjectFile64)' == ''" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).dna</DnaProjectFile64>
+    <DnaProjectFile64 Condition="'$(DnaProjectFile64)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).dna')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).dna</DnaProjectFile64>
+    <DnaProjectFile64 Condition="'$(DnaProjectFile64)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName).$(Configuration).dna')" >$(DnaProjectRoot)$(DnaProjectName).$(Configuration).dna</DnaProjectFile64>
+    <DnaProjectFile64 Condition="'$(DnaProjectFile64)' == ''" >$(DnaProjectRoot)$(DnaProjectName).dna</DnaProjectFile64>
 
     <DnaProjectFile32 Condition="Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).$(Configuration).dna')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).$(Configuration).dna</DnaProjectFile32>
     <DnaProjectFile32 Condition="'$(DnaProjectFile32)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).dna')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).dna</DnaProjectFile32>
-    <DnaProjectFile32 Condition="'$(DnaProjectFile32)' == ''" >$(DnaProjectFile64)</DnaProjectFile32>
+    <DnaProjectFile32 Condition="'$(DnaProjectFile32)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName).$(Configuration).dna')" >$(DnaProjectRoot)$(DnaProjectName).$(Configuration).dna</DnaProjectFile32>
+    <DnaProjectFile32 Condition="'$(DnaProjectFile32)' == ''" >$(DnaProjectRoot)$(DnaProjectName).dna</DnaProjectFile32>
 
-    <DnaConfigFile64 Condition="Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).$(Configuration).xll.config')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).$(Configuration).xll.config</DnaConfigFile64>
+    <DnaConfigFile64 Condition="Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).xll.$(Configuration).config')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).xll.$(Configuration).config</DnaConfigFile64>
     <DnaConfigFile64 Condition="'$(DnaConfigFile64)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).xll.config')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix64).xll.config</DnaConfigFile64>
+    <DnaConfigFile64 Condition="'$(DnaConfigFile64)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName).xll.$(Configuration).config')" >$(DnaProjectRoot)$(DnaProjectName).xll.$(Configuration).config</DnaConfigFile64>
+    <DnaConfigFile64 Condition="'$(DnaConfigFile64)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName).xll.config')" >$(DnaProjectRoot)$(DnaProjectName).xll.config</DnaConfigFile64>
 
-    <DnaConfigFile32 Condition="Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).$(Configuration).xll.config')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).$(Configuration).xll.config</DnaConfigFile32>
+    <DnaConfigFile32 Condition="Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).xll.$(Configuration).config')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).xll.$(Configuration).config</DnaConfigFile32>
     <DnaConfigFile32 Condition="'$(DnaConfigFile32)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).xll.config')" >$(DnaProjectRoot)$(DnaProjectName)$(DnaSuffix32).xll.config</DnaConfigFile32>
-    <DnaConfigFile32 Condition="'$(DnaConfigFile32)' == ''" >$(DnaConfigFile64)</DnaConfigFile32>
+    <DnaConfigFile32 Condition="'$(DnaConfigFile32)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName).xll.$(Configuration).config')" >$(DnaProjectRoot)$(DnaProjectName).xll.$(Configuration).config</DnaConfigFile32>
+    <DnaConfigFile32 Condition="'$(DnaConfigFile32)' == '' And Exists('$(DnaProjectRoot)$(DnaProjectName).xll.config')" >$(DnaProjectRoot)$(DnaProjectName).xll.config</DnaConfigFile32>
 
     <TestRoot Condition="'$(TestRoot)' == '' And Exists('$(ProjectDir)Workbooks\')" >$(ProjectDir)Workbooks\</TestRoot>
     <TestRoot Condition="'$(TestRoot)' == ''" >$(ProjectDir)</TestRoot>
