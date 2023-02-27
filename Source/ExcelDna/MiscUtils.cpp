@@ -97,7 +97,7 @@ std::wstring LoadStringFromResource(HMODULE hModule, int id)
 {
 	const wchar_t* buffer = nullptr;
 	LoadStringW(hModule, id, (LPWSTR)&buffer, 0);//ugly cast for badly designed API (specifying buffer size == 0 returns a read only pointer.
-	return std::wstring(buffer, *((WORD*) buffer - 1));//The WORD preceding the address is the size of the resource string. which is not null-terminated.
+	return std::wstring(buffer, *((WORD*)buffer - 1));//The WORD preceding the address is the size of the resource string. which is not null-terminated.
 }
 
 std::wstring FormatString(std::wstring formatString, ...)
@@ -194,18 +194,4 @@ std::wstring UTF8toUTF16(const std::string& utf8)
 		utf16.resize(len);
 	}
 	return utf16;
-}
-
-const byte* XorKeys = (byte*)"ExcelDna";
-int XorKeysLength = 8;
-
-void XorRecode(SafeByteArray& data)
-{
-	byte* pData;
-	int cbData = data.AccessData(&pData);
-	for (int i = 0; i < cbData; i++)
-	{
-		pData[i] = (byte)(XorKeys[i % XorKeysLength] ^ pData[i]);
-	}
-	data.UnaccessData();
 }

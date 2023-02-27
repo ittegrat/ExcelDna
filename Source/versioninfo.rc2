@@ -7,8 +7,9 @@
 // Version
 //
 
-#define VER_FILEVERSION 1,6,0,0
-#define VER_FILEVERSION_STR "1.6.0.0"
+#define VER_FILEVERSION 1,6,1,9000
+#define VER_FILEVERSION_STR "1.6.1.9000"
+#define VER_PRODVERSION "1.6.1.0-beta3"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION VER_FILEVERSION
@@ -35,7 +36,7 @@ VALUE "InternalName", "ExcelDna"
 VALUE "LegalCopyright", "Copyright (C) 2005-2022 Govert van Drimmelen"
 VALUE "OriginalFilename", "ExcelDna.xll"
 VALUE "ProductName", "Excel-DNA Add-In Framework for Microsoft Excel"
-VALUE "ProductVersion", VER_FILEVERSION_STR " (ittegrat)"
+VALUE "ProductVersion", VER_PRODVERSION " (ittegrat)"
 END
 END
 BLOCK "VarFileInfo"

@@ -89,6 +89,22 @@
     <!-- Default value: true -->
     <ExcelDnaPackRunMultithreaded></ExcelDnaPackRunMultithreaded>
 
+    <!-- Enables cross-platform resource packing implementation when executing on Windows. -->
+    <!-- Default value: false -->
+    <ExcelDnaPackManagedResourcePackingOnWindows></ExcelDnaPackManagedResourcePackingOnWindows>
+
+    <!-- Enables packing native libraries from .deps.json. -->
+    <!-- Default value: false -->
+    <ExcelDnaPackNativeLibraryDependencies></ExcelDnaPackNativeLibraryDependencies>
+
+    <!-- Enables packing managed assemblies from .deps.json. -->
+    <!-- Default value: false -->
+    <ExcelDnaPackManagedDependencies></ExcelDnaPackManagedDependencies>
+
+    <!-- Semicolon separated file names list to not pack from .deps.json. -->
+    <!-- Default value: empty -->
+    <ExcelDnaPackExcludeDependencies></ExcelDnaPackExcludeDependencies>
+
     <!-- EXCEL.EXE path for debugging. -->
     <!-- Default value: auto detect -->
     <ExcelDnaExcelExePath></ExcelDnaExcelExePath>
@@ -133,9 +149,17 @@
     <!-- Default value: empty -->
     <ExcelAddInSignOptions></ExcelAddInSignOptions>
 
-    <!-- Replace XLL version information with data read from ExternalLibrary assembly -->
+    <!-- Replace XLL version information with data read from ExternalLibrary assembly. -->
     <!-- Default value: false -->
     <ExcelAddInUseVersionAsOutputVersion></ExcelAddInUseVersionAsOutputVersion>
+
+    <!-- Prevents every static public function from becomming a UDF, they will need an explicit [ExcelFunction] annotation. -->
+    <!-- Default value: false -->
+    <ExcelAddInExplicitExports></ExcelAddInExplicitExports>
+
+    <!-- Prevents automatic registration of functions and commands. -->
+    <!-- Default value: false -->
+    <ExcelAddInExplicitRegistration></ExcelAddInExplicitRegistration>
 
     <!-- We don't need the extra 'ref' directory and reference assemblies for the Excel add-in -->
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>

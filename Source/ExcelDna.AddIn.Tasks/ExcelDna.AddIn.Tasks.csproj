@@ -5,7 +5,7 @@
   <PropertyGroup>
     
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net452</TargetFrameworks>
+    <TargetFrameworks>net462</TargetFrameworks>
 
     <AssemblyTitle>Excel-DNA MSBuild Tasks</AssemblyTitle>
     <Description>MSBuild Tasks for Excel DNA</Description>
@@ -17,11 +17,21 @@
 
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
+    <DefineConstants>$(DefineConstants);PACKEXTENDEDDEPS</DefineConstants>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0-windows' ">
+    <DefineConstants>$(DefineConstants);ASMRESOLVER;PACKEXTENDEDDEPS</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\ExcelDna.Integration\ExcelDna.Integration.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="6.0.0" />
     <PackageReference Include="envdte" Version="16.9.31023.347" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <Reference Include="Microsoft.Build.Framework" />
@@ -30,10 +40,13 @@
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0-windows' ">
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="6.0.0" />
     <PackageReference Include="envdte" Version="16.9.31023.347" />
     <PackageReference Include="Microsoft.Build.Framework" Version="15.9.20" />
     <PackageReference Include="Microsoft.Build.Tasks.Core" Version="15.9.20" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="AsmResolver.PE" Version="4.11.2" />
   </ItemGroup>
 
   <ItemGroup>

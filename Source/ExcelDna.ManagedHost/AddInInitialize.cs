@@ -1,6 +1,7 @@
 ﻿using ExcelDna.Loader;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -34,13 +35,15 @@ namespace ExcelDna.ManagedHost
         static ExcelDnaAssemblyLoadContext _alc;
 
         [UnmanagedCallersOnly]
-        public static short Initialize(void* xlAddInExportInfoAddress, void* hModuleXll, void* pPathXLL, byte disableAssemblyContextUnload)
+        public static short Initialize(void* xlAddInExportInfoAddress, void* hModuleXll, void* pPathXLL, byte disableAssemblyContextUnload, void* pTempDirPath)
         {
+            UnloadALC();
             ProcessStartupHooks();
 
             string pathXll = Marshal.PtrToStringUni((IntPtr)pPathXLL);
+            string tempDirPath = Marshal.PtrToStringUni((IntPtr)pTempDirPath);
             _alc = new ExcelDnaAssemblyLoadContext(pathXll, disableAssemblyContextUnload == 0);
-            AssemblyManager.Initialize((IntPtr)hModuleXll, pathXll, _alc);
+            AssemblyManager.Initialize((IntPtr)hModuleXll, pathXll, _alc, Path.Combine(tempDirPath, "ExcelDna.ManagedHost"));
             var loaderAssembly = _alc.LoadFromAssemblyName(new AssemblyName("ExcelDna.Loader"));
             var xlAddInType = loaderAssembly.GetType("ExcelDna.Loader.XlAddIn");
             var initOK = (bool)xlAddInType.InvokeMember("Initialize", BindingFlags.Public | BindingFlags.Static | BindingFlags.InvokeMethod, null, null,
@@ -51,6 +54,29 @@ namespace ExcelDna.ManagedHost
                     (Action<TraceSource>)Logger.SetIntegrationTraceSource });
 
             return initOK ? (short)1 : (short)0;
+        }
+
+        private static void UnloadALC()
+        {
+            if (_alc == null)
+                return;
+
+            WeakReference alcWeakRef = StartUnloadALC();
+            for (int i = 0; alcWeakRef.IsAlive && (i < 10); i++)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+        }
+
+        private static WeakReference StartUnloadALC()
+        {
+            AssemblyManager.ResetALC();
+
+            WeakReference alcWeakRef = new WeakReference(_alc);
+            _alc.Unload();
+            _alc = null;
+            return alcWeakRef;
         }
 
         private static void ProcessStartupHooks()

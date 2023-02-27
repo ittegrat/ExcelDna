@@ -27,8 +27,6 @@ namespace ExcelDna.Integration
 #pragma warning restore CS0618 // Type or member is obsolete
     public class ExcelComAddIn : IDTExtensibility2
     {
-        public string FriendlyName { get; protected set; }
-        public string Description { get; protected set; }
         internal DnaLibrary DnaLibrary { get; set; }
         private string _progId;
         protected string ProgId
@@ -40,6 +38,9 @@ namespace ExcelDna.Integration
         {
             _progId = progId;
         }
+
+        public string FriendlyName { get; protected set; }
+        public string Description { get; protected set; }
 
         #region IDTExtensibility2 interface
         public virtual void OnConnection(object Application, ext_ConnectMode ConnectMode, object AddInInst, ref Array custom)
@@ -107,7 +108,7 @@ namespace ExcelDna.Integration
 
             // Put together some nicer descriptions for the Add-ins dialog.
             string friendlyName;
-            if (!String.IsNullOrEmpty(addIn.FriendlyName))
+            if (addIn.FriendlyName != null)
                 friendlyName = addIn.FriendlyName;
             else if (addIn is ExcelRibbon)
                 friendlyName = addIn.DnaLibrary.Name; // + " (Ribbon Helper)"; (No more - it is displayed in the Ribbon tooltip!)
@@ -115,11 +116,7 @@ namespace ExcelDna.Integration
                 friendlyName = addIn.DnaLibrary.Name + " (Custom Task Pane Helper)";
             else
                 friendlyName = addIn.DnaLibrary.Name + " (COM Add-in Helper)";
-            string description;
-            if (!String.IsNullOrEmpty(addIn.Description))
-                description = addIn.Description;
-            else
-                description = string.Format("Dynamically created COM Add-in to load custom UI for the Excel Add-in {0}, located at {1}.", addIn.DnaLibrary.Name, DnaLibrary.XllPath);
+            string description = addIn.Description ?? string.Format("Dynamically created COM Add-in to load custom UI for the Excel Add-in {0}, located at {1}.", addIn.DnaLibrary.Name, DnaLibrary.XllPath);
 
 
             Logger.ComAddIn.Verbose("Getting Application object");

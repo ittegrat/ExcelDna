@@ -7,6 +7,7 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using ExcelDna.AddIn.Tasks.Logging;
 using ExcelDna.AddIn.Tasks.Utils;
+using ExcelDna.PackedResources.Logging;
 
 namespace ExcelDna.AddIn.Tasks
 {
@@ -175,10 +176,14 @@ namespace ExcelDna.AddIn.Tasks
                     // Copy .config file to build output folder for 32-bit (if exist)
                     TryCopyConfigFileToOutput(item.InputConfigFileNameAs32Bit, item.InputConfigFileNameFallbackAs32Bit, item.OutputConfigFileNameAs32Bit);
 
-                    AddDnaToListOfFilesToPack(item.OutputDnaFileNameAs32Bit, item.OutputXllFileNameAs32Bit, item.OutputConfigFileNameAs32Bit, Packed32BitXllName);
+                    TryCopyDepsJsonToBuildOutput(item.OutputDnaFileNameAs32Bit);
+
+                    AddDnaToListOfFilesToPack(item.OutputDnaFileNameAs32Bit, item.OutputXllFileNameAs32Bit, item.OutputConfigFileNameAs32Bit, Packed32BitXllName, "32");
 
                     if (UnpackIsEnabled)
                         PublishUnpackedAddin(item.OutputDnaFileNameAs32Bit, item.OutputXllFileNameAs32Bit);
+                    else if (!CompressResources)
+                        UncompressXll(item.OutputXllFileNameAs32Bit);
                 }
             }
         }
@@ -201,10 +206,14 @@ namespace ExcelDna.AddIn.Tasks
                     // Copy .config file to build output folder for 64-bit (if exist)
                     TryCopyConfigFileToOutput(item.InputConfigFileNameAs64Bit, item.InputConfigFileNameFallbackAs64Bit, item.OutputConfigFileNameAs64Bit);
 
-                    AddDnaToListOfFilesToPack(item.OutputDnaFileNameAs64Bit, item.OutputXllFileNameAs64Bit, item.OutputConfigFileNameAs64Bit, Packed64BitXllName);
+                    TryCopyDepsJsonToBuildOutput(item.OutputDnaFileNameAs64Bit);
+
+                    AddDnaToListOfFilesToPack(item.OutputDnaFileNameAs64Bit, item.OutputXllFileNameAs64Bit, item.OutputConfigFileNameAs64Bit, Packed64BitXllName, "64");
 
                     if (UnpackIsEnabled)
                         PublishUnpackedAddin(item.OutputDnaFileNameAs64Bit, item.OutputXllFileNameAs64Bit);
+                    else if (!CompressResources)
+                        UncompressXll(item.OutputXllFileNameAs64Bit);
                 }
             }
         }
@@ -272,6 +281,24 @@ namespace ExcelDna.AddIn.Tasks
             return null;
         }
 
+        private void TryCopyDepsJsonToBuildOutput(string outputDnaPath)
+        {
+            Integration.DnaLibrary dna = Integration.DnaLibrary.LoadFrom(File.ReadAllBytes(outputDnaPath), Path.GetDirectoryName(outputDnaPath));
+            if (dna == null || dna.ExternalLibraries == null)
+                return;
+
+            foreach (Integration.ExternalLibrary ext in dna.ExternalLibraries)
+            {
+                string src = dna.ResolvePath(Path.ChangeExtension(ext.Path, "deps.json"));
+                if (File.Exists(src))
+                {
+                    string dst = Path.ChangeExtension(outputDnaPath, "deps.json");
+                    CopyFileToBuildOutput(src, dst, overwrite: true);
+                    return;
+                }
+            }
+        }
+
         private void CopyFileToBuildOutput(string sourceFile, string destinationFile, bool overwrite)
         {
             _log.Information(_fileSystem.GetRelativePath(sourceFile) + " -> " + _fileSystem.GetRelativePath(destinationFile));
@@ -298,7 +325,7 @@ namespace ExcelDna.AddIn.Tasks
             _fileSystem.WriteFile(sourceFileText, destinationFile);
         }
 
-        private void AddDnaToListOfFilesToPack(string outputDnaFileName, string outputXllFileName, string outputXllConfigFileName, string packedFileName)
+        private void AddDnaToListOfFilesToPack(string outputDnaFileName, string outputXllFileName, string outputXllConfigFileName, string packedFileName, string outputBitness)
         {
             if (!PackIsEnabled)
             {
@@ -312,6 +339,7 @@ namespace ExcelDna.AddIn.Tasks
                 {"OutputDnaFileName", outputDnaFileName},
                 {"OutputPackedXllFileName", outputPackedXllFileName},
                 {"OutputXllConfigFileName", outputXllConfigFileName },
+                {"OutputBitness", outputBitness },
             };
 
             _dnaFilesToPack.Add(new TaskItem(outputDnaFileName, metadata));
@@ -342,6 +370,12 @@ namespace ExcelDna.AddIn.Tasks
             if (UseVersionAsOutputVersion)
                 result = result.Replace("<ExternalLibrary ", "<ExternalLibrary " + "UseVersionAsOutputVersion=\"true\" ");
 
+            if (ExplicitExports)
+                result = result.Replace("ExplicitExports=\"false\"", "ExplicitExports=\"true\"");
+
+            if (ExplicitRegistration)
+                result = result.Replace("<ExternalLibrary ", "<ExternalLibrary " + "ExplicitRegistration=\"true\" ");
+
             return result.Replace("%OutputFileName%", OutputFileName());
         }
 
@@ -360,11 +394,50 @@ namespace ExcelDna.AddIn.Tasks
                 return;
 
             List<string> filesToPublish = new List<string>();
-            int result = PackedResources.ExcelDnaPack.Pack(dnaPath, null, false, false, false, null, filesToPublish);
+            int result = PackedResources.ExcelDnaPack.Pack(dnaPath, null, false, false, false, null, filesToPublish, false, false, null, false, null, _log);
             if (result != 0)
                 throw new ApplicationException($"Pack failed with exit code {result}.");
             foreach (string file in filesToPublish)
                 File.Copy(file, Path.Combine(destinationFolder, Path.GetFileName(file)), true);
+        }
+
+        private void UncompressXll(string xllPath)
+        {
+            string[] assemblies = { "ExcelDna.Integration", "ExcelDna.Loader" };
+            foreach (var i in assemblies)
+            {
+                string name = i.ToUpperInvariant();
+                UncompressResource(xllPath, name, ResourceHelper.TypeName.ASSEMBLY, "ASSEMBLY_LZMA");
+                UncompressResource(xllPath, name, ResourceHelper.TypeName.PDB, "PDB_LZMA");
+            }
+        }
+
+        private void UncompressResource(string xllPath, string name, ResourceHelper.TypeName typeName, string compressedTypeName)
+        {
+            byte[] data = LoadResource(xllPath, name, compressedTypeName);
+            if (data == null)
+                return;
+
+            ResourceHelper.ResourceUpdater ru = new ResourceHelper.ResourceUpdater(Path.Combine(Directory.GetCurrentDirectory(), xllPath), false, _log);
+            ru.AddFile(data, name, typeName, null, false, false);
+            ru.RemoveResource(compressedTypeName, name);
+            ru.EndUpdate();
+        }
+
+        private byte[] LoadResource(string xllPath, string name, string typeName)
+        {
+            IntPtr hModule = ResourceHelper.LoadXllResources(xllPath);
+            if (hModule == IntPtr.Zero)
+                throw new InvalidOperationException("Error loading resources from " + xllPath);
+
+            try
+            {
+                return ResourceHelper.ResourceUpdater.LoadResourceBytes(hModule, typeName, name);
+            }
+            finally
+            {
+                ResourceHelper.FreeXllResources(hModule);
+            }
         }
 
         private void UnpackXll(string xllPath, string destinationFolder)
@@ -407,7 +480,7 @@ namespace ExcelDna.AddIn.Tasks
 
         private void TryRemoveResource(string xllPath, string name, string typeName)
         {
-            var updater = new ResourceHelper.ResourceUpdater(xllPath);
+            var updater = new ResourceHelper.ResourceUpdater(xllPath, false, _log);
             try
             {
                 updater.RemoveResource(typeName, name);
@@ -469,6 +542,12 @@ namespace ExcelDna.AddIn.Tasks
         public string IntegrationDllPath { get; set; }
 
         /// <summary>
+        /// Compress (LZMA) of resources
+        /// </summary>
+        [Required]
+        public bool CompressResources { get; set; }
+
+        /// <summary>
         /// Enable/disable building 32-bit .dna files
         /// </summary>
         public bool Create32BitAddIn { get; set; }
@@ -512,6 +591,11 @@ namespace ExcelDna.AddIn.Tasks
         /// Explicit 64-bit output file name
         /// </summary>
         public string Packed64BitXllName { get; set; }
+
+        /// <summary>
+        /// Enable/disable cross-platform resource packing implementation when executing on Windows.
+        /// </summary>
+        public bool PackManagedOnWindows { get; set; }
 
         /// <summary>
         /// The output directory for the 'published' add-in
@@ -563,6 +647,16 @@ namespace ExcelDna.AddIn.Tasks
         /// Replace XLL version information with data read from ExternalLibrary assembly
         /// </summary>
         public bool UseVersionAsOutputVersion { get; set; }
+
+        /// <summary>
+        /// Prevents every static public function from becomming a UDF, they will need an explicit [ExcelFunction] annotation
+        /// </summary>
+        public bool ExplicitExports { get; set; }
+
+        /// <summary>
+        /// Prevents automatic registration of functions and commands
+        /// </summary>
+        public bool ExplicitRegistration { get; set; }
 
         /// <summary>
         /// The list of .dna files copied to the output

@@ -2,6 +2,7 @@
 using Microsoft.Build.Framework;
 using ExcelDna.AddIn.Tasks.Logging;
 using ExcelDna.AddIn.Tasks.Utils;
+using ExcelDna.PackedResources.Logging;
 using System.IO;
 
 namespace ExcelDna.AddIn.Tasks
@@ -29,7 +30,12 @@ namespace ExcelDna.AddIn.Tasks
             {
                 _log.Debug("Running PackExcelAddIn Task");
 
-                int result = ExcelDna.PackedResources.ExcelDnaPack.Pack(OutputDnaFileName, OutputPackedXllFileName, CompressResources, RunMultithreaded, true, null, null);
+                bool useManagedResourceResolver = false;
+#if NETCOREAPP
+                useManagedResourceResolver = PackManagedOnWindows || !OperatingSystem.IsWindows();
+#endif
+
+                int result = ExcelDna.PackedResources.ExcelDnaPack.Pack(OutputDnaFileName, OutputPackedXllFileName, CompressResources, RunMultithreaded, true, null, null, PackNativeLibraryDependencies, PackManagedDependencies, ExcludeDependencies, useManagedResourceResolver, OutputBitness, _log);
                 if (result != 0)
                     throw new ApplicationException($"Pack failed with exit code {result}.");
 
@@ -93,6 +99,12 @@ namespace ExcelDna.AddIn.Tasks
         public string OutputPackedXllFileName { get; set; }
 
         /// <summary>
+        /// Output add-in bitness
+        /// </summary>
+        [Required]
+        public string OutputBitness { get; set; }
+
+        /// <summary>
         /// Compress (LZMA) of resources
         /// </summary>
         [Required]
@@ -103,6 +115,26 @@ namespace ExcelDna.AddIn.Tasks
         /// </summary>
         [Required]
         public bool RunMultithreaded { get; set; }
+
+        /// <summary>
+        /// Enables packing native libraries from .deps.json
+        /// </summary>
+        public bool PackNativeLibraryDependencies { get; set; }
+
+        /// <summary>
+        /// Enables packing managed assemblies from .deps.json
+        /// </summary>
+        public bool PackManagedDependencies { get; set; }
+
+        /// <summary>
+        /// Semicolon separated file names list to not pack from .deps.json
+        /// </summary>
+        public string ExcludeDependencies { get; set; }
+
+        /// <summary>
+        /// Enable/disable cross-platform resource packing implementation when executing on Windows.
+        /// </summary>
+        public bool PackManagedOnWindows { get; set; }
 
         /// <summary>
         /// Path to signtool.exe

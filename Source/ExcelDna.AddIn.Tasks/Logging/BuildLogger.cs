@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Build.Framework;
+using ExcelDna.PackedResources.Logging;
 
 namespace ExcelDna.AddIn.Tasks.Logging
 {
@@ -19,32 +20,32 @@ namespace ExcelDna.AddIn.Tasks.Logging
             _targetName = targetName;
         }
 
-        public void Message(MessageImportance importance, string format, params object[] args)
+        public void Message(LogImportance importance, string format, params object[] args)
         {
             _buildTask.BuildEngine.LogMessageEvent(new BuildMessageEventArgs($"{_targetName}: {string.Format(format, args)}",
-                _targetName, _targetName, importance));
+                _targetName, _targetName, (MessageImportance)importance));
         }
 
         public void Verbose(string format, params object[] args)
         {
-            Message(MessageImportance.Low, format);
+            Message(LogImportance.Low, format, args);
         }
 
         public void Debug(string format, params object[] args)
         {
-            Message(MessageImportance.Normal, format);
+            Message(LogImportance.Normal, format, args);
         }
 
         public void Information(string format, params object[] args)
         {
-            Message(MessageImportance.High, format);
+            Message(LogImportance.High, format, args);
         }
 
         public void Warning(Exception exception, string format, params object[] args)
         {
             if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-            Warning("DNA" + exception.GetType().Name.GetHashCode(), format, args);
+            Warning(GetErrorCode(exception), format, args);
         }
 
         public void Warning(string code, string format, params object[] args)
@@ -57,13 +58,28 @@ namespace ExcelDna.AddIn.Tasks.Logging
         {
             if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-            Error("DNA" + exception.GetType().Name.GetHashCode(), format, args);
+            Error(GetErrorCode(exception), format, args);
+        }
+
+        public void Error(Type errorSource, string format, params object[] args)
+        {
+            Error(GetErrorCode(errorSource), format, args);
         }
 
         public void Error(string code, string format, params object[] args)
         {
             _buildTask.BuildEngine.LogErrorEvent(new BuildErrorEventArgs(_targetName, code, null, 0, 0, 0, 0,
                 string.Format(format, args), _targetName, _targetName));
+        }
+
+        private static string GetErrorCode(Exception exception)
+        {
+            return GetErrorCode(exception.GetType());
+        }
+
+        private static string GetErrorCode(Type type)
+        {
+            return "DNA" + type.Name.GetHashCode();
         }
     }
 }
