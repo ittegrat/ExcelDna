@@ -50,6 +50,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{23634D27-D704-45E9-B8DD-6214E44287B2}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
+		versioninfo.rc2 = versioninfo.rc2
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MasterBuild", "MasterBuild", "{CEC18D63-D3C7-44F6-8752-C2E53FC6BAF8}"
