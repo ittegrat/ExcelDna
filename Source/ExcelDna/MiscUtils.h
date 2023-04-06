@@ -78,3 +78,4 @@ private:
 
 std::wstring UTF8toUTF16(const std::string& utf8);
 
+bool EnvConfigExists(std::wstring& configFileName);

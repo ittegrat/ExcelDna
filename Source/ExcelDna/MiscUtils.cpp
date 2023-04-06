@@ -195,3 +195,27 @@ std::wstring UTF8toUTF16(const std::string& utf8)
 	}
 	return utf16;
 }
+
+bool EnvConfigExists(std::wstring& configFileName)
+{
+	size_t dirSepInd = configFileName.find_last_of(L'\\');
+	if (dirSepInd == std::wstring::npos)
+		return false;
+	std::wstring dirName = std::wstring(configFileName, 0, dirSepInd);
+	std::wstring varName = std::wstring(configFileName, dirSepInd + 1);
+	const DWORD sz = 8192;
+	wchar_t buffer[sz] = L"";
+	DWORD ans = GetEnvironmentVariableW(varName.c_str(), buffer, sz);
+	if (ans > 0 && ans < sz) {
+		std::wstring fname;
+		if ((buffer[0] == L'\\' && buffer[1] == L'\\') || buffer[1] == L':')
+			fname = std::wstring(buffer);
+		else
+			fname = dirName + L'\\' + std::wstring(buffer);
+		if (FileExists(fname.c_str())) {
+			configFileName = fname;
+			return true;
+		}
+	}
+	return false;
+}
