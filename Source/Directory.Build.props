@@ -7,9 +7,9 @@
 		<Product>Excel-DNA Add-In Framework for Microsoft Excel</Product>
 		<Copyright>Copyright © 2005-2022 Govert van Drimmelen</Copyright>
 		<!-- Version: revision is pre-release * 1000 -->
-		<Version>1.7.0.2000</Version>
-		<FileVersion>1.7.0.2000</FileVersion>
-		<InformationalVersion>1.7.0.0-rc2 (ittegrat)</InformationalVersion>
+		<Version>1.7.0.3000</Version>
+		<FileVersion>1.7.0.3000</FileVersion>
+		<InformationalVersion>1.7.0.0-rc3 (ittegrat)</InformationalVersion>
 
 		<LibDistFolder>$(SolutionDir)..\_libs_</LibDistFolder>
 
