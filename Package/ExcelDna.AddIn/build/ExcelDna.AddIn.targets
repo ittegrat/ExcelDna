@@ -6,9 +6,11 @@
 
 	<PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">
 		<ExcelDnaTasksPath>$(ExcelDnaToolsPath)net6.0-windows7.0\</ExcelDnaTasksPath>
-	</PropertyGroup>
+		<ExcelDnaDscomIntegrationPath>$(ExcelDnaToolsPath)net6.0-windows7.0</ExcelDnaDscomIntegrationPath>
+</PropertyGroup>
 	<PropertyGroup Condition="'$(MSBuildRuntimeType)' != 'Core'">
 		<ExcelDnaTasksPath>$(ExcelDnaToolsPath)net452\</ExcelDnaTasksPath>
+		<ExcelDnaDscomIntegrationPath>$(ExcelDnaToolsPath)net452</ExcelDnaDscomIntegrationPath>
 	</PropertyGroup>
 	
 	<UsingTask TaskName="ExcelDna.AddIn.Tasks.SetDebuggerOptions" AssemblyFile="$(ExcelDnaTasksPath)ExcelDna.AddIn.Tasks.dll" />
@@ -69,6 +71,12 @@
     <ExcelDnaPackRunMultithreaded Condition="'$(ExcelDnaPackRunMultithreaded)' == ''">true</ExcelDnaPackRunMultithreaded>
     <ExcelDnaPublishPath Condition="'$(ExcelDnaPublishPath)' == '' AND '$(UsingMicrosoftNETSdk)' != 'true'">%none%</ExcelDnaPublishPath>
   </PropertyGroup>
+
+	<Target Name="ExcelDnaDscomIntegration" BeforeTargets="DsComExportTypeLibraryAfterBuild">
+		<ItemGroup>
+			<DsComTlbExportAssemblyPaths Include="$(ExcelDnaDscomIntegrationPath)" />
+		</ItemGroup>
+	</Target>
 
   <!--
     Target that ensures ExcelDna.Integration.dll is not copied to the output folder
@@ -175,7 +183,7 @@
   <Target Name="ExcelDnaBuild" BeforeTargets="PostBuildEvent" Condition="'$(RunExcelDnaBuild)' == 'true'">
 
 	<PropertyGroup>
-		<ExcelDnaTlbDscom>false</ExcelDnaTlbDscom>
+		<ExcelDnaTlbDscom Condition="'$(ExcelDnaTlbDscom)' == ''">false</ExcelDnaTlbDscom>
 	</PropertyGroup>
 		
 	<PropertyGroup Condition="'$(TargetFrameworkVersion.Length())' >= '2' AND '$(TargetFrameworkVersion.Substring(1,1))' >= '6'">
@@ -224,6 +232,7 @@
  	  AddInName="$(ExcelAddInName)"
  	  AddInFileName="$(ExcelAddInFileName)"
  	  AddInInclude="$(ExcelAddInInclude)"
+ 	  AddInExports="$(ExcelAddInExports)"
  	  AddInExternalLibraryPath="$(ExcelAddInExternalLibraryPath)"
  	  DisableAssemblyContextUnload="$(ExcelAddInDisableAssemblyContextUnload)"
  	  ProjectName="$(MSBuildProjectName)"
@@ -234,6 +243,7 @@
 	  UseVersionAsOutputVersion="$(ExcelAddInUseVersionAsOutputVersion)"
 	  ExplicitExports="$(ExcelAddInExplicitExports)"
 	  ExplicitRegistration="$(ExcelAddInExplicitRegistration)"
+		ComServer="$(ExcelAddInComServer)"
 	  IntegrationDllPath="$(ExcelDnaRuntimeToolsPath)ExcelDna.Integration.dll"
 	  TemplateDnaPath="$(MSBuildThisFileDirectory)..\content\ExcelDna-Template.dna">
       <Output TaskParameter="DnaFilesToPack" ItemName="ExcelDnaFilesToPack" />
