@@ -16,6 +16,7 @@ folder.ico
 *.xll
 
 # Build results
+Source/verdefs.h
 _libs_/
 [Dd]ebug/
 [Rr]elease/

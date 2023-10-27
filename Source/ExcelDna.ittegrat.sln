@@ -47,7 +47,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{D0B0
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDnaUnpack", "ExcelDnaUnpack\ExcelDnaUnpack.csproj", "{1E872976-6721-4B20-A19A-1DA817CCCCD0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{23634D27-D704-45E9-B8DD-6214E44287B2}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Version", "Version", "{23634D27-D704-45E9-B8DD-6214E44287B2}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
 		versioninfo.rc2 = versioninfo.rc2

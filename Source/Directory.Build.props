@@ -1,18 +1,78 @@
 <Project>
 
 	<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../../'))" Condition="exists($([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../../')))"/>
-
+	
 	<PropertyGroup>
 
 		<Product>Excel-DNA Add-In Framework for Microsoft Excel</Product>
 		<Copyright>Copyright © 2005-2022 Govert van Drimmelen</Copyright>
-		<!-- If pre-release, 'revision' is pre-release * 1000 -->
-		<Version>1.7.0.5000</Version>
-		<FileVersion>1.7.0.5000</FileVersion>
-		<InformationalVersion>1.7.0.0-rc5 (ittegrat)</InformationalVersion>
+
+		<EnableUnitySupport>true</EnableUnitySupport>
+
+		<!--
+			The release 'revision' begins at $(ReleaseBase), i.e. 20000, and a rel-branch possibly start from
+			there. On the release commit, $(VersionSuffix) and $(BaseCommitForCount) are empty. On the rel-branch
+			$(VersionSuffix) is emprty and $(BaseCommitForCount) is release commit, so 'revision' is greater
+			than $(ReleaseBase). On master, after the release commit, $(VersionPrefix) and $(VersionSuffix) are
+			reset and $(BaseCommitForCount) is set to the previous release commit.
+		-->
+		<VersionPrefix>1.7.0</VersionPrefix>
+		<VersionSuffix>rc7</VersionSuffix>
+		<BaseCommitForCount>e9c52e9305469d059c2ac9d794abb358c6fb85b5</BaseCommitForCount>
+		<RepositoryUrl>https://github.com/ittegrat/ExcelDna</RepositoryUrl>
 
 		<LibDistFolder>$(SolutionDir)..\_libs_</LibDistFolder>
 
-		<EnableUnitySupport>true</EnableUnitySupport>
 	</PropertyGroup>
+
+	<Target Name="GenerateVersionInfo" BeforeTargets="GetAssemblyVersion;InitializeSourceControlInformation">
+
+		<PropertyGroup>
+			<GitCMD>C:\Programs\PortableGit\cmd\git.exe</GitCMD>
+			<VerDefsPath>$(SolutionDir)verdefs.h</VerDefsPath>
+			<ReleaseBase>20000</ReleaseBase>
+			<CommitCount>0</CommitCount>
+		</PropertyGroup>
+
+		<Exec Condition="'$(BaseCommitForCount)' != ''"
+					Command="$(GitCMD) rev-list --count $(BaseCommitForCount)..HEAD"
+					ConsoleToMSBuild="true"
+					StandardOutputImportance="normal"
+		>
+			<Output TaskParameter="ConsoleOutput" PropertyName="CommitCount" />
+		</Exec>
+
+		<Exec Command="$(GitCMD) rev-parse HEAD"
+					ConsoleToMSBuild="true"
+					StandardOutputImportance="normal"
+		>
+			<Output TaskParameter="ConsoleOutput" PropertyName="SourceRevisionId" />
+		</Exec>
+
+		<ItemGroup>
+			<AssemblyMetadata Include="SourceRevisionId" Value="$(SourceRevisionId)" />
+		</ItemGroup>
+
+		<PropertyGroup>
+			<CommitCount Condition="'$(VersionSuffix)' == ''">$([MSBuild]::Add($(ReleaseBase), $(CommitCount)))</CommitCount>
+			<FileVersion>$(VersionPrefix).$(CommitCount)</FileVersion>
+			<VersionSuffix Condition="'$(VersionSuffix)' != ''">$(VersionSuffix).ittegrat</VersionSuffix>
+			<VersionSuffix Condition="'$(VersionSuffix)' == ''">ittegrat</VersionSuffix>
+			<Version>$(VersionPrefix)-$(VersionSuffix)</Version>
+			<VerDefsText>
+#define VER_FILEVERSION $(FileVersion.Replace('.',','))
+#define VER_FILEVERSION_STR "$(FileVersion)"
+#define VER_PRODVERSION "$(Version)+$(SourceRevisionId)"
+			</VerDefsText>
+		</PropertyGroup>
+
+		<WriteLinesToFile
+				File="$(VerDefsPath)"
+				Lines="$(VerDefsText)"
+				Overwrite="true"
+				WriteOnlyWhenDifferent="true"
+		/>
+
+	</Target>
+
 </Project>
