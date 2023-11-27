@@ -17,8 +17,8 @@
 			reset and $(BaseCommitForCount) is set to the previous release commit.
 		-->
 		<VersionPrefix>1.7.0</VersionPrefix>
-		<VersionSuffix>rc9</VersionSuffix>
-		<BaseCommitForCount>e9c52e9305469d059c2ac9d794abb358c6fb85b5</BaseCommitForCount>
+		<VersionSuffix></VersionSuffix>
+		<BaseCommitForCount></BaseCommitForCount>
 		<RepositoryUrl>https://github.com/ittegrat/ExcelDna</RepositoryUrl>
 
 		<LibDistFolder>$(SolutionDir)..\_libs_</LibDistFolder>
