@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using ExcelDna.Integration.Rtd;
 using JetBrains.Annotations;
 
@@ -38,35 +39,44 @@ namespace ExcelDna.Integration
         void OnNext(object value);
     }
 
-    [Obsolete("Can't support the NoAutoStartOnOpen option anymore")]
     [Flags]
     public enum ExcelObservableOptions
     {
         None = 0,
-        NoAutoStartOnOpen = 1   
+
+        [Obsolete("Can't support the NoAutoStartOnOpen option anymore")]
+        NoAutoStartOnOpen = 1,
+
+        Lossless = 2,
     }
 
     public static class ExcelAsyncUtil
     {
         [Obsolete("ExcelAsyncUtil.Initialize is no longer required. The call can be removed.")]
-        public static void Initialize() {}
+        public static void Initialize() { }
         [Obsolete("ExcelAsyncUtil.Uninitialize is no longer required. The call can be removed.")]
-        public static void Uninitialize() {}
+        public static void Uninitialize() { }
 
         // Async observable support
         // This is the most general RTD registration
+        // ThreadSafe
         public static object Observe(string callerFunctionName, object callerParameters, ExcelObservableSource observableSource)
         {
-            return AsyncObservableImpl.ProcessObservable(callerFunctionName, callerParameters, observableSource);
+            return Observe(callerFunctionName, callerParameters, ExcelObservableOptions.None, observableSource);
         }
 
-        [Obsolete("Can't support the NoAutoStartOnOpen option anymore - call without ExcelObservableOptions")]
         public static object Observe(string callerFunctionName, object callerParameters, ExcelObservableOptions options, ExcelObservableSource observableSource)
         {
-            return Observe(callerFunctionName, callerParameters, observableSource);
+            return AsyncObservableImpl.ProcessObservable(callerFunctionName, callerParameters, options, observableSource);
+        }
+
+        public static object Observe<T>(string callerFunctionName, object callerParameters, Func<IObservable<T>> observableSource)
+        {
+            return Observe(callerFunctionName, callerParameters, () => new ExcelObservable<T>(observableSource()));
         }
 
         // Async function support
+        // ThreadSafe
         public static object Run(string callerFunctionName, object callerParameters, ExcelFunc asyncFunc)
         {
             Debug.Print("ExcelAsyncUtil.Run - {0} : {1}", callerFunctionName, callerParameters);
@@ -74,11 +84,41 @@ namespace ExcelDna.Integration
         }
 
         // Async function with ExcelAsyncHandle
-        // The function will run on the main thread (like an Excel 2010+ native async function), 
-        // but can spawn a thread and return the value later.
+        // Can spawn a thread and return the value later
+        // ThreadSafe
         public static object Run(string callerFunctionName, object callerParameters, ExcelFuncAsyncHandle asyncFunc)
         {
             return AsyncObservableImpl.ProcessFuncAsyncHandle(callerFunctionName, callerParameters, asyncFunc);
+        }
+
+        public static object RunTask<TResult>(string callerFunctionName, object callerParameters, Func<Task<TResult>> taskSource)
+        {
+            return Observe(callerFunctionName, callerParameters, delegate
+            {
+                var task = taskSource();
+                return new ExcelTaskObservable<TResult>(task);
+            });
+        }
+
+        // Careful - this might only work as long as the task is not shared between calls, since cancellation cancels that task
+        public static object RunTaskWithCancellation<TResult>(string callerFunctionName, object callerParameters, Func<CancellationToken, Task<TResult>> taskSource)
+        {
+            return Observe(callerFunctionName, callerParameters, delegate
+            {
+                var cts = new CancellationTokenSource();
+                var task = taskSource(cts.Token);
+                return new ExcelTaskObservable<TResult>(task, cts);
+            });
+        }
+
+        public static object RunAsTask<TResult>(string callerFunctionName, object callerParameters, Func<TResult> function)
+        {
+            return RunTask(callerFunctionName, callerParameters, () => Task.Factory.StartNew(function));
+        }
+
+        public static object RunAsTaskWithCancellation<TResult>(string callerFunctionName, object callerParameters, Func<CancellationToken, TResult> function)
+        {
+            return RunTaskWithCancellation(callerFunctionName, callerParameters, cancellationToken => Task.Factory.StartNew(() => function(cancellationToken), cancellationToken));
         }
 
         // Async macro support

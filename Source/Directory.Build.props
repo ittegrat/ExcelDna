@@ -16,9 +16,9 @@
 			than $(ReleaseBase). On master, after the release commit, $(VersionPrefix) and $(VersionSuffix) are
 			reset and $(BaseCommitForCount) is set to the previous release commit.
 		-->
-		<VersionPrefix>1.7.0</VersionPrefix>
-		<VersionSuffix></VersionSuffix>
-		<BaseCommitForCount></BaseCommitForCount>
+		<VersionPrefix>1.8.0</VersionPrefix>
+		<VersionSuffix>dev</VersionSuffix>
+		<BaseCommitForCount>18b88802d322927ef781d73fc187b67c2a40947c</BaseCommitForCount>
 		<RepositoryUrl>https://github.com/ittegrat/ExcelDna</RepositoryUrl>
 
 		<LibDistFolder>$(SolutionDir)..\_libs_</LibDistFolder>
