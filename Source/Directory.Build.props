@@ -10,11 +10,14 @@
 		<EnableUnitySupport>true</EnableUnitySupport>
 
 		<!--
-			The release 'revision' begins at $(ReleaseBase), i.e. 20000, and a rel-branch possibly start from
-			there. On the release commit, $(VersionSuffix) and $(BaseCommitForCount) are empty. On the rel-branch
-			$(VersionSuffix) is emprty and $(BaseCommitForCount) is release commit, so 'revision' is greater
-			than $(ReleaseBase). On master, after the release commit, $(VersionPrefix) and $(VersionSuffix) are
-			reset and $(BaseCommitForCount) is set to the previous release commit.
+			The 'revision' number is computed starting from the 'git rev-list' command output. On the release
+			commit, $(VersionPrefix) is set, but $(VersionSuffix) and $(BaseCommitForCount) are empty, so
+			'revision' is equal to $(ReleaseBase), i.e. 20000. On the rel-branch that starts from release
+			commit, $(VersionSuffix) is emprty and $(BaseCommitForCount) is the release commit, so 'revision'
+			is greater than $(ReleaseBase). On master, after the release commit, $(VersionPrefix) and
+			$(VersionSuffix) are set to new semantic version values and $(BaseCommitForCount) is set to the
+			previous release commit, so 'revision' number is greater than 0, but less than $(ReleaseBase).
+			An '*' is added in front of the HEAD commit hash if the worktree is dirty.
 		-->
 		<VersionPrefix>1.8.0</VersionPrefix>
 		<VersionSuffix>dev</VersionSuffix>
@@ -49,15 +52,20 @@
 			<Output TaskParameter="ConsoleOutput" PropertyName="SourceRevisionId" />
 		</Exec>
 
-		<ItemGroup>
-			<AssemblyMetadata Include="SourceRevisionId" Value="$(SourceRevisionId)" />
-		</ItemGroup>
+		<Exec Command="$(GitCMD) diff --quiet &amp;&amp; echo clean"
+					ConsoleToMSBuild="true"
+					IgnoreExitCode="true"
+					StandardOutputImportance="normal"
+		>
+			<Output TaskParameter="ConsoleOutput" PropertyName="DirtyFlag" />
+		</Exec>
 
 		<PropertyGroup>
 			<CommitCount Condition="'$(VersionSuffix)' == ''">$([MSBuild]::Add($(ReleaseBase), $(CommitCount)))</CommitCount>
 			<FileVersion>$(VersionPrefix).$(CommitCount)</FileVersion>
 			<VersionSuffix Condition="'$(VersionSuffix)' != ''">$(VersionSuffix).ittegrat</VersionSuffix>
 			<VersionSuffix Condition="'$(VersionSuffix)' == ''">ittegrat</VersionSuffix>
+			<SourceRevisionId Condition="'$(DirtyFlag)' == ''">*$(SourceRevisionId)</SourceRevisionId>
 			<Version>$(VersionPrefix)-$(VersionSuffix)</Version>
 			<VerDefsText>
 #define VER_FILEVERSION $(FileVersion.Replace('.',','))
@@ -65,6 +73,10 @@
 #define VER_PRODVERSION "$(Version)+$(SourceRevisionId)"
 			</VerDefsText>
 		</PropertyGroup>
+
+		<ItemGroup>
+			<AssemblyMetadata Include="SourceRevisionId" Value="$(SourceRevisionId)" />
+		</ItemGroup>
 
 		<WriteLinesToFile
 				File="$(VerDefsPath)"
