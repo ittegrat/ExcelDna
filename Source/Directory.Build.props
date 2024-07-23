@@ -20,8 +20,8 @@
 			An '*' is added in front of the HEAD commit hash if the worktree is dirty.
 		-->
 		<VersionPrefix>1.8.0</VersionPrefix>
-		<VersionSuffix>dev</VersionSuffix>
-		<BaseCommitForCount>18b88802d322927ef781d73fc187b67c2a40947c</BaseCommitForCount>
+		<VersionSuffix></VersionSuffix>
+		<BaseCommitForCount></BaseCommitForCount>
 		<RepositoryUrl>https://github.com/ittegrat/ExcelDna</RepositoryUrl>
 
 		<LibDistFolder>$(SolutionDir)..\_libs_</LibDistFolder>
