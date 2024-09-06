@@ -91,7 +91,18 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "ExcelDna.PackedResources", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.PackedResourcesTests", "Tests\ExcelDna.PackedResourcesTests\ExcelDna.PackedResourcesTests.csproj", "{28D046D4-B414-4DAF-818F-897A97B921DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelDna.AddIn.Tasks.IntegrationRuntimeTests", "Tests\ExcelDna.AddIn.Tasks.IntegrationRuntimeTests\ExcelDna.AddIn.Tasks.IntegrationRuntimeTests.csproj", "{238F95C5-87DF-4973-88C2-5A9509C3935F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.AddIn.RuntimeTests", "Tests\ExcelDna.AddIn.RuntimeTests\ExcelDna.AddIn.RuntimeTests.csproj", "{297D72F7-FD48-4751-B2EF-F97DBAD0C901}"
+	ProjectSection(ProjectDependencies) = postProject
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882} = {59AE5BC6-F37E-4CE3-BAE3-796F807A9882}
+		{A9887347-3E93-4E4E-96DF-227648E57B60} = {A9887347-3E93-4E4E-96DF-227648E57B60}
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3} = {DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9} = {FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.AddIn.Tasks.IntegrationRuntimeTests", "Tests\ExcelDna.AddIn.Tasks.IntegrationRuntimeTests\ExcelDna.AddIn.Tasks.IntegrationRuntimeTests.csproj", "{238F95C5-87DF-4973-88C2-5A9509C3935F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.RuntimeTests", "Tests\ExcelDna.RuntimeTests\ExcelDna.RuntimeTests.csproj", "{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -176,10 +187,18 @@ Global
 		{28D046D4-B414-4DAF-818F-897A97B921DF}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{28D046D4-B414-4DAF-818F-897A97B921DF}.Release|Win32.ActiveCfg = Release|Any CPU
 		{28D046D4-B414-4DAF-818F-897A97B921DF}.Release|x64.ActiveCfg = Release|Any CPU
+		{297D72F7-FD48-4751-B2EF-F97DBAD0C901}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{297D72F7-FD48-4751-B2EF-F97DBAD0C901}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{297D72F7-FD48-4751-B2EF-F97DBAD0C901}.Release|Win32.ActiveCfg = Release|Any CPU
+		{297D72F7-FD48-4751-B2EF-F97DBAD0C901}.Release|x64.ActiveCfg = Release|Any CPU
 		{238F95C5-87DF-4973-88C2-5A9509C3935F}.Debug|Win32.ActiveCfg = Debug|Any CPU
 		{238F95C5-87DF-4973-88C2-5A9509C3935F}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{238F95C5-87DF-4973-88C2-5A9509C3935F}.Release|Win32.ActiveCfg = Release|Any CPU
 		{238F95C5-87DF-4973-88C2-5A9509C3935F}.Release|x64.ActiveCfg = Release|Any CPU
+		{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}.Release|Win32.ActiveCfg = Release|Any CPU
+		{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

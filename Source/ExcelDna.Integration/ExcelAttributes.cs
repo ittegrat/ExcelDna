@@ -177,4 +177,35 @@ namespace ExcelDna.Integration
             if (!suppressOverwriteError.HasValue) suppressOverwriteError = ca.suppressOverwriteError;
         }
     }
+
+    // An extension of the ExcelFunction attribute to identify functions that should be registered as async
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    [MeansImplicitUse]
+    public class ExcelAsyncFunctionAttribute : ExcelFunctionAttribute
+    {
+    }
+
+    /// <summary>
+    /// For user-defined parameter conversions.
+    /// </summary>
+	[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    [MeansImplicitUse]
+    public class ExcelParameterConversionAttribute : Attribute
+    {
+    }
+
+    /// <summary>
+    /// For user-defined function execution handlers.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    [MeansImplicitUse]
+    public class ExcelFunctionExecutionHandlerSelectorAttribute : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    [MeansImplicitUse]
+    public class ExcelFunctionProcessorAttribute : Attribute
+    {
+    }
 }

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using ExcelDna.ComInterop;
@@ -28,6 +27,10 @@ namespace ExcelDna.Integration
         public static void ProcessAssemblies(
                     List<ExportedAssembly> assemblies,
                     List<MethodInfo> methods,
+                    List<ExtendedRegistration.ExcelParameterConversion> excelParameterConversions,
+                    List<ExtendedRegistration.ExcelFunctionProcessor> excelFunctionProcessors,
+                    List<ExtendedRegistration.ExcelFunction> excelFunctionsExtendedRegistration,
+                    List<FunctionExecutionHandlerSelector> excelFunctionExecutionHandlerSelectors,
                     List<ExcelAddInInfo> addIns,
                     List<Type> rtdServerTypes,
                     List<ExcelComClassType> comClassTypes)
@@ -36,7 +39,14 @@ namespace ExcelDna.Integration
 
             foreach (ExportedAssembly assembly in assemblies)
             {
-                int initialObjectsCount = methods.Count + addIns.Count + rtdServerTypes.Count + comClassTypes.Count;
+                int initialObjectsCount = methods.Count +
+                    excelParameterConversions.Count +
+                    excelFunctionProcessors.Count +
+                    excelFunctionsExtendedRegistration.Count +
+                    excelFunctionExecutionHandlerSelectors.Count +
+                    addIns.Count +
+                    rtdServerTypes.Count +
+                    comClassTypes.Count;
                 Logger.Initialization.Verbose("Processing assembly {0}. ExplicitExports {1}, ExplicitRegistration {2}, ComServer {3}, IsDynamic {4}",
                     assembly.Assembly.FullName, assembly.ExplicitExports, assembly.ExplicitRegistration, assembly.ComServer, assembly.IsDynamic);
                 // Patch contributed by y_i on CodePlex:
@@ -71,7 +81,10 @@ namespace ExcelDna.Integration
 
                         if (!explicitRegistration)
                         {
-                            GetExcelMethods(type, explicitExports, methods);
+                            GetExcelParameterConversions(type, excelParameterConversions);
+                            GetExcelFunctionProcessors(type, excelFunctionProcessors);
+                            GetExcelMethods(type, explicitExports, methods, excelFunctionsExtendedRegistration);
+                            GetExcelFunctionExecutionHandlerSelectors(type, excelFunctionExecutionHandlerSelectors);
                         }
                         GetExcelAddIns(assembly, type, loadRibbons, addIns);
                         GetRtdServerTypes(type, rtdServerTypes, out isRtdServer);
@@ -83,14 +96,45 @@ namespace ExcelDna.Integration
                     }
                 }
 
-                if (methods.Count + addIns.Count + rtdServerTypes.Count + comClassTypes.Count == initialObjectsCount)
+                if (methods.Count +
+                    excelParameterConversions.Count +
+                    excelFunctionProcessors.Count +
+                    excelFunctionsExtendedRegistration.Count +
+                    excelFunctionExecutionHandlerSelectors.Count +
+                    addIns.Count +
+                    rtdServerTypes.Count +
+                    comClassTypes.Count == initialObjectsCount)
                 {
                     Logger.Initialization.Error("No objects loaded from {0}", assembly.Assembly.FullName);
                 }
             }
         }
 
-        static void GetExcelMethods(Type t, bool explicitExports, List<MethodInfo> excelMethods)
+        static void GetExcelParameterConversions(Type t, List<ExtendedRegistration.ExcelParameterConversion> excelParameterConversions)
+        {
+            MethodInfo[] mis = t.GetMethods(BindingFlags.Public | BindingFlags.Static);
+            foreach (MethodInfo mi in mis)
+            {
+                if (IsParameterConversion(mi))
+                {
+                    excelParameterConversions.Add(new ExtendedRegistration.ExcelParameterConversion(mi));
+                }
+            }
+        }
+
+        static void GetExcelFunctionProcessors(Type t, List<ExtendedRegistration.ExcelFunctionProcessor> excelFunctionProcessors)
+        {
+            MethodInfo[] mis = t.GetMethods(BindingFlags.Public | BindingFlags.Static);
+            foreach (MethodInfo mi in mis)
+            {
+                if (IsFunctionProcessor(mi))
+                {
+                    excelFunctionProcessors.Add(new ExtendedRegistration.ExcelFunctionProcessor(mi));
+                }
+            }
+        }
+
+        static void GetExcelMethods(Type t, bool explicitExports, List<MethodInfo> excelMethods, List<ExtendedRegistration.ExcelFunction> excelFunctionsExtendedRegistration)
         {
             // DOCUMENT: Exclude if not a class, not public, /*abstract,*/ an array,  
             // open generic type or in "My" namespace.
@@ -110,8 +154,30 @@ namespace ExcelDna.Integration
             // Filter list first - LINQ would be nice here :-)
             foreach (MethodInfo mi in mis)
             {
-                if (IsMethodSupported(mi, explicitExports))
+                bool isSupported = IsMethodSupported(mi, explicitExports);
+
+                if (!isSupported && IsMethodMarkedForExport(mi))
+                {
+                    excelFunctionsExtendedRegistration.Add(new ExtendedRegistration.ExcelFunction(mi));
+                }
+                else if (!isSupported)
+                {
+                    // CONSIDER: More detailed logging
+                    Logger.Initialization.Info("Method not registered - unsupported signature, abstract or generic: '{0}.{1}'", mi.DeclaringType.Name, mi.Name);
+                }
+
+                if (isSupported)
                     excelMethods.Add(mi);
+            }
+        }
+
+        static void GetExcelFunctionExecutionHandlerSelectors(Type type, List<FunctionExecutionHandlerSelector> excelFunctionExecutionHandlerSelectors)
+        {
+            MethodInfo[] mis = type.GetMethods(BindingFlags.Public | BindingFlags.Static);
+            foreach (MethodInfo mi in mis)
+            {
+                if (IsExcelFunctionExecutionHandlerSelector(mi))
+                    excelFunctionExecutionHandlerSelectors.Add((IExcelFunctionInfo functionInfo) => (IFunctionExecutionHandler)mi.Invoke(null, new object[] { functionInfo }));
             }
         }
 
@@ -130,7 +196,15 @@ namespace ExcelDna.Integration
             {
                 isSupported = false;
             }
-            else if (!IsParameterTypeSupported(mi.ReturnType))
+            else if (!IsPrimitiveParameterType(mi.ReturnType))
+            {
+                isSupported = false;
+            }
+            else if (IsExcelAsyncFunction(mi))
+            {
+                isSupported = false;
+            }
+            else if (ExtendedRegistration.ParamsRegistration.IsParamsMethod(new ExtendedRegistration.ExcelFunction(mi)))
             {
                 isSupported = false;
             }
@@ -138,23 +212,22 @@ namespace ExcelDna.Integration
             {
                 foreach (ParameterInfo pi in mi.GetParameters())
                 {
-                    if (!IsParameterTypeSupported(pi.ParameterType))
+                    if (pi.IsOptional || !IsPrimitiveParameterType(pi.ParameterType))
                         isSupported = false;
                 }
             }
 
-            // We want to log methods that are marked for export, but have unsupported types.
-            if (!isSupported && IsMethodMarkedForExport(mi))
-            {
-                Logger.Initialization.Error("Method not registered - unsupported signature, abstract or generic: '{0}.{1}'", mi.DeclaringType.Name, mi.Name);
-            }
-            else if (!isSupported)
-            {
-                // CONSIDER: More detailed logging
-                Logger.Initialization.Info("Method not registered - unsupported signature, abstract or generic: '{0}.{1}'", mi.DeclaringType.Name, mi.Name);
-            }
-
             return isSupported;
+        }
+
+        static bool IsExcelAsyncFunction(MethodInfo mi)
+        {
+            return HasCustomAttribute(mi, "ExcelDna.Integration.ExcelAsyncFunctionAttribute");
+        }
+
+        static bool IsExcelFunctionExecutionHandlerSelector(MethodInfo mi)
+        {
+            return HasCustomAttribute(mi, "ExcelDna.Integration.ExcelFunctionExecutionHandlerSelectorAttribute");
         }
 
         // CAUTION: This check needs to match the usage in ExcelDna.Loader.XlMethodInfo.SetAttributeInfo()
@@ -183,7 +256,7 @@ namespace ExcelDna.Integration
             return false;
         }
 
-        static readonly List<Type> _supportedParameterTypes = new List<Type>
+        static readonly List<Type> _primitiveParameterTypes = new List<Type>
         {
             typeof(double),
             typeof(string),
@@ -202,9 +275,9 @@ namespace ExcelDna.Integration
             typeof(void)
         };
 
-        static bool IsParameterTypeSupported(Type type)
+        static public bool IsPrimitiveParameterType(Type type)
         {
-            return _supportedParameterTypes.Contains(type) ||
+            return _primitiveParameterTypes.Contains(type) ||
                    (ExcelDnaUtil.ExcelVersion >= 14.0 && type == typeof(ExcelAsyncHandle));    // Only Excel 2010+
         }
 
@@ -355,6 +428,30 @@ namespace ExcelDna.Integration
                     !IsRibbonType(type.BaseType);
 
             return isRibbon;
+        }
+
+        private static bool IsParameterConversion(MethodInfo methodInfo)
+        {
+            return HasCustomAttribute(methodInfo, "ExcelDna.Integration.ExcelParameterConversionAttribute");
+        }
+
+        private static bool IsFunctionProcessor(MethodInfo methodInfo)
+        {
+            return HasCustomAttribute(methodInfo, "ExcelDna.Integration.ExcelFunctionProcessorAttribute");
+        }
+
+        private static bool HasCustomAttribute(MethodInfo methodInfo, string attributeName)
+        {
+            object[] atts = methodInfo.GetCustomAttributes(false);
+            foreach (object att in atts)
+            {
+                Type attType = att.GetType();
+                if (TypeHasAncestorWithFullName(attType, attributeName))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static bool TypeHasAncestorWithFullName(Type type, string fullName)

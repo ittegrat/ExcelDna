@@ -19,9 +19,9 @@
 			previous release commit, so 'revision' number is greater than 0, but less than $(ReleaseBase).
 			An '*' is added in front of the HEAD commit hash if the worktree is dirty.
 		-->
-		<VersionPrefix>1.8.0</VersionPrefix>
-		<VersionSuffix></VersionSuffix>
-		<BaseCommitForCount></BaseCommitForCount>
+		<VersionPrefix>1.9.0</VersionPrefix>
+		<VersionSuffix>dev</VersionSuffix>
+		<BaseCommitForCount>5772c12a55325bf8f8f208a16c24a16c9a7879ae</BaseCommitForCount>
 		<RepositoryUrl>https://github.com/ittegrat/ExcelDna</RepositoryUrl>
 
 		<LibDistFolder>$(SolutionDir)..\_libs_</LibDistFolder>
