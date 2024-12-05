@@ -29,9 +29,9 @@
         Default: $(ProjectName)
       * DnaMasterProject: ...   Default: $(DnaProjectName)
       * TestRoot: an optional folder containing test workbooks.
-        Default: $(ProjectDir)\Workbooks.
+        Default: $(ProjectDir)Workbooks.
       * TestWorkbook: the path of the main test workbook. It is automatically opened when
-        you start debugging. Default: $(TestRoot)\$(DnaProjectName).xls[m|x].
+        you start debugging. Default: $(TestRoot)$(DnaProjectName).xls[m|x].
   -->
 
   <!-- Default Properties -->
@@ -128,33 +128,33 @@
 
   <Target Name="ExcelDnaPostBuild32" Condition="'$(Platform)' == 'x86' Or '$(Platform)' == 'AnyCPU'">
     <Error Condition="!Exists('$(DnaProjectFile32)')" Text="Missing AddIn Project file: $(DnaProjectFile32)." />
-    <Copy SourceFiles="$(DnaProjectFile32)" DestinationFiles="$(TargetDir)\$(XllBaseName32).dna" SkipUnchangedFiles="true" />
-    <Copy Condition="'$(DnaConfigFile32)' != ''" SourceFiles="$(DnaConfigFile32)" DestinationFiles="$(TargetDir)\$(XllBaseName32).xll.config" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(DnaProjectFile32)" DestinationFiles="$(TargetDir)$(XllBaseName32).dna" SkipUnchangedFiles="true" />
+    <Copy Condition="'$(DnaConfigFile32)' != ''" SourceFiles="$(DnaConfigFile32)" DestinationFiles="$(TargetDir)$(XllBaseName32).xll.config" SkipUnchangedFiles="true" />
     <CallTarget Condition="$(GenerateTypeLib)" Targets="ExportTypeLib32"/>
-    <Copy Condition="'$(Configuration)' == 'Debug'" SourceFiles="$(ExcelDnaSDK)\ExcelDna.xll" DestinationFiles="$(TargetDir)\$(XllBaseName32).xll" SkipUnchangedFiles="true" />
-    <Exec Condition="'$(Configuration)' == 'Release'" WorkingDirectory="$(TargetDir)" Command="$(ExcelDnaSDK)\ExcelDnaPack $(XllBaseName32).dna /O $(XllBaseName32).xll /Y"/>
+    <Copy Condition="'$(Configuration)' == 'Debug'" SourceFiles="$(ExcelDnaSDK)ExcelDna.xll" DestinationFiles="$(TargetDir)$(XllBaseName32).xll" SkipUnchangedFiles="true" />
+    <Exec Condition="'$(Configuration)' == 'Release'" WorkingDirectory="$(TargetDir)" Command="$(ExcelDnaSDK)ExcelDnaPack $(XllBaseName32).dna /O $(XllBaseName32).xll /Y"/>
     <Message Importance="high" Text="$(XllBaseName32).xll ready." />
   </Target>
 
   <Target Name="ExcelDnaPostBuild64" Condition="'$(Platform)' == 'x64' Or '$(Platform)' == 'AnyCPU'">
     <Error Condition="!Exists('$(DnaProjectFile64)')" Text="Missing AddIn Project file: $(DnaProjectFile64)." />
-    <Copy SourceFiles="$(DnaProjectFile64)" DestinationFiles="$(TargetDir)\$(XllBaseName64).dna" SkipUnchangedFiles="true" />
-    <Copy Condition="'$(DnaConfigFile64)' != ''" SourceFiles="$(DnaConfigFile64)" DestinationFiles="$(TargetDir)\$(XllBaseName64).xll.config" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(DnaProjectFile64)" DestinationFiles="$(TargetDir)$(XllBaseName64).dna" SkipUnchangedFiles="true" />
+    <Copy Condition="'$(DnaConfigFile64)' != ''" SourceFiles="$(DnaConfigFile64)" DestinationFiles="$(TargetDir)$(XllBaseName64).xll.config" SkipUnchangedFiles="true" />
     <CallTarget Condition="$(GenerateTypeLib)" Targets="ExportTypeLib64"/>
-    <Copy Condition="'$(Configuration)' == 'Debug'" SourceFiles="$(ExcelDnaSDK)\ExcelDna64.xll" DestinationFiles="$(TargetDir)\$(XllBaseName64).xll" SkipUnchangedFiles="true" />
-    <Exec Condition="'$(Configuration)' == 'Release'" WorkingDirectory="$(TargetDir)" Command="$(ExcelDnaSDK)\ExcelDnaPack $(XllBaseName64).dna /O $(XllBaseName64).xll /Y /x64" />
+    <Copy Condition="'$(Configuration)' == 'Debug'" SourceFiles="$(ExcelDnaSDK)ExcelDna64.xll" DestinationFiles="$(TargetDir)$(XllBaseName64).xll" SkipUnchangedFiles="true" />
+    <Exec Condition="'$(Configuration)' == 'Release'" WorkingDirectory="$(TargetDir)" Command="$(ExcelDnaSDK)ExcelDnaPack $(XllBaseName64).dna /O $(XllBaseName64).xll /Y /x64" />
     <Message Importance="high" Text="$(XllBaseName64).xll ready." />
   </Target>
 
   <Target Name="ExportTypeLib32">
-    <Copy SourceFiles="$(ExcelDnaSDK)\ExcelDna.Integration.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(ExcelDnaSDK)ExcelDna.Integration.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <Exec WorkingDirectory="$(TargetDir)" Command='"$(TargetFrameworkSDKToolsDirectory)tlbexp" /nologo /win32 $(TargetPath)' />
     <Delete Files="$(TargetDir)ExcelDna.Integration.dll" />
     <Delete Files="$(TargetDir)ExcelDna.Integration.tlb" />
   </Target>
 
   <Target Name="ExportTypeLib64">
-    <Copy SourceFiles="$(ExcelDnaSDK)\ExcelDna.Integration.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(ExcelDnaSDK)ExcelDna.Integration.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <Exec WorkingDirectory="$(TargetDir)" Command='"$(TargetFrameworkSDKToolsDirectory)tlbexp" /nologo /win64 /silence:131175 $(TargetPath)' />
     <Delete Files="$(TargetDir)ExcelDna.Integration.dll" />
     <Delete Files="$(TargetDir)ExcelDna.Integration.tlb" />
@@ -169,13 +169,13 @@
   </PropertyGroup>
 
   <Target Name="ExcelDnaPostClean">
-    <Delete Files="$(TargetDir)\$(TargetName).tlb" />
-    <Delete Files="$(TargetDir)\$(XllBaseName32).dna" />
-    <Delete Files="$(TargetDir)\$(XllBaseName32).xll" />
-    <Delete Files="$(TargetDir)\$(XllBaseName32).xll.config" />
-    <Delete Files="$(TargetDir)\$(XllBaseName64).dna" />
-    <Delete Files="$(TargetDir)\$(XllBaseName64).xll" />
-    <Delete Files="$(TargetDir)\$(XllBaseName64).xll.config" />
+    <Delete Files="$(TargetDir)$(TargetName).tlb" />
+    <Delete Files="$(TargetDir)$(XllBaseName32).dna" />
+    <Delete Files="$(TargetDir)$(XllBaseName32).xll" />
+    <Delete Files="$(TargetDir)$(XllBaseName32).xll.config" />
+    <Delete Files="$(TargetDir)$(XllBaseName64).dna" />
+    <Delete Files="$(TargetDir)$(XllBaseName64).xll" />
+    <Delete Files="$(TargetDir)$(XllBaseName64).xll.config" />
   </Target>
 
 </Project>

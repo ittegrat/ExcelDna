@@ -46,6 +46,13 @@
 			<Output TaskParameter="ConsoleOutput" PropertyName="CommitCount" />
 		</Exec>
 
+		<Exec Command="$(GitCMD) branch --show-current"
+					ConsoleToMSBuild="true"
+					StandardOutputImportance="normal"
+		>
+			<Output TaskParameter="ConsoleOutput" PropertyName="BranchName" />
+		</Exec>
+
 		<Exec Command="$(GitCMD) rev-parse HEAD"
 					ConsoleToMSBuild="true"
 					StandardOutputImportance="normal"
@@ -64,10 +71,12 @@
 		<PropertyGroup>
 			<CommitCount Condition="'$(VersionSuffix)' == ''">$([MSBuild]::Add($(ReleaseBase), $(CommitCount)))</CommitCount>
 			<FileVersion>$(VersionPrefix).$(CommitCount)</FileVersion>
-			<VersionSuffix Condition="'$(VersionSuffix)' != ''">$(VersionSuffix).ittegrat</VersionSuffix>
-			<VersionSuffix Condition="'$(VersionSuffix)' == ''">ittegrat</VersionSuffix>
+			<BranchName Condition="'$(BranchName)' == 'master' Or '$(BranchName)' == 'main'"></BranchName>
+			<VersionSuffix Condition="'$(VersionSuffix)' != '' And '$(BranchName)' != ''">$(VersionSuffix).$(BranchName)</VersionSuffix>
+			<VersionSuffix Condition="'$(VersionSuffix)' == '' And '$(BranchName)' != ''">$(BranchName)</VersionSuffix>
+			<VersionSuffix Condition="'$(VersionSuffix)' != ''">-$(VersionSuffix)</VersionSuffix>
+			<Version>$(VersionPrefix)$(VersionSuffix)</Version>
 			<SourceRevisionId Condition="'$(DirtyFlag)' == ''">*$(SourceRevisionId)</SourceRevisionId>
-			<Version>$(VersionPrefix)-$(VersionSuffix)</Version>
 			<VerDefsText>
 #define VER_FILEVERSION $(FileVersion.Replace('.',','))
 #define VER_FILEVERSION_STR "$(FileVersion)"

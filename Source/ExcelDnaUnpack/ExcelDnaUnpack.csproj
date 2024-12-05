@@ -21,7 +21,7 @@
     <Compile Include="..\ExcelDna.PackedResources\Lzma\*.cs" LinkBase="Lzma" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net452' And '$(Configuration)' == 'Release'">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net462' And '$(Configuration)' == 'Release'">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LibDistFolder)" />
   </Target>
 
