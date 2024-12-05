@@ -5,12 +5,12 @@
   <PropertyGroup>
 
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net452</TargetFrameworks>
+    <TargetFrameworks>net462</TargetFrameworks>
     <PlatformTarget>AnyCPU</PlatformTarget>
 
     <AssemblyTitle>ExcelDnaUnpack</AssemblyTitle>
     <Description>Excel-DNA Unpacking Tool</Description>
-    <Copyright>Copyright Â© 2019-2021 Ittegrat</Copyright>
+    <Copyright>Copyright Â© 2019-2024 Ittegrat</Copyright>
 
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\assets\exceldna.snk</AssemblyOriginatorKeyFile>

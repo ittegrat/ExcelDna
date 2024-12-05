@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     
-    <TargetFrameworks>net452</TargetFrameworks>
+    <TargetFrameworks>net462</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -22,7 +22,7 @@
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <Reference Include="System.Windows.Forms" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Office.Interop.Excel">
@@ -34,7 +34,7 @@
     <CleanDependsOn>$(CleanDependsOn);Restore;</CleanDependsOn>
   </PropertyGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net452' And '$(Configuration)' == 'Release'">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net462' And '$(Configuration)' == 'Release'">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LibDistFolder)" />
   </Target>
 
