@@ -60,7 +60,7 @@
 			<Output TaskParameter="ConsoleOutput" PropertyName="SourceRevisionId" />
 		</Exec>
 
-		<Exec Command="$(GitCMD) diff --quiet &amp;&amp; echo clean"
+		<Exec Command="$(GitCMD) diff --quiet HEAD &amp;&amp; echo clean"
 					ConsoleToMSBuild="true"
 					IgnoreExitCode="true"
 					StandardOutputImportance="normal"
