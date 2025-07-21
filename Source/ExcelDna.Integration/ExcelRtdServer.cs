@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using ExcelDna.Logging;
 
 namespace ExcelDna.Integration.Rtd
@@ -197,6 +198,8 @@ namespace ExcelDna.Integration.Rtd
         // Can be overridden to track Refresh calls from Excel
         protected virtual void OnRefreshDataProcessedInsideLock(IReadOnlyCollection<Topic> dirtyTopics) { }
 
+        protected IReadOnlyCollection<Topic> GetActiveTopics() { return _activeTopics.Values; }
+
         // Called from any thread, inside the update lock
         // Add the topic to the dirty set and calls UpdateNotify()
         void SetDirtyInsideLock(Topic topic)
@@ -230,6 +233,7 @@ namespace ExcelDna.Integration.Rtd
         // All these interface methods can be called only on the main Excel thread
         int IRtdServer.ServerStart(IRTDUpdateEvent callbackObject)
         {
+            Debug.WriteLine($"[{DateTime.Now:HH:mm:ss.f}] ServerStart");
             try
             {
                 _updateSync = SynchronizationManager.RtdUpdateSynchronization;
@@ -260,6 +264,7 @@ namespace ExcelDna.Integration.Rtd
         //            if newValues is now true, Excel will use the value returned by ConnectData.
         object IRtdServer.ConnectData(int topicId, ref Array strings, ref bool newValues)
         {
+            Debug.WriteLine($"[{DateTime.Now:HH:mm:ss.f}] ConnectData");
             try
             {
                 // Check for an active topic with the same topicId 
@@ -326,6 +331,7 @@ namespace ExcelDna.Integration.Rtd
 
         Array IRtdServer.RefreshData(ref int topicCount)
         {
+            Debug.WriteLine($"[{DateTime.Now:HH:mm:ss.f}] RefreshData");
             // Get a copy of the dirty topics to work with, 
             // locking as briefly as possible (thanks Naju).
             HashSet<Topic> dirty;
@@ -347,6 +353,7 @@ namespace ExcelDna.Integration.Rtd
             {
                 result[0, i] = topic.TopicId;
                 result[1, i] = topic.Value;
+                Debug.WriteLine($"[{DateTime.Now:HH:mm:ss.f}] RefreshData - TopicId: {topic.TopicId} Value: {topic.Value}");
                 i++;
             }
             return result;
@@ -354,6 +361,7 @@ namespace ExcelDna.Integration.Rtd
 
         void IRtdServer.DisconnectData(int topicId)
         {
+            Debug.WriteLine($"[{DateTime.Now:HH:mm:ss.f}] DisconnectData");
             try
             {
                 Topic topic;
@@ -386,6 +394,7 @@ namespace ExcelDna.Integration.Rtd
         // (though this should not be needed according to the RTD interface contract)
         int IRtdServer.Heartbeat()
         {
+            Debug.WriteLine($"[{DateTime.Now:HH:mm:ss.f}] Heartbeat");
             try
             {
                 var updateNotifyPosted = false;
@@ -426,6 +435,7 @@ namespace ExcelDna.Integration.Rtd
 
         void IRtdServer.ServerTerminate()
         {
+            Debug.WriteLine($"[{DateTime.Now:HH:mm:ss.f}] ServerTerminate");
             try
             {
                 // The Unregister call here just tells the reg-free loading that we are gone, 

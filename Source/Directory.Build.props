@@ -20,9 +20,9 @@
 			commit, so the 'revision' number is greater than 0, but likely less than $(ReleaseBase).
 			An '*' is put in front of the HEAD commit hash if the worktree is dirty.
 		-->
-		<VersionPrefix>1.9.0</VersionPrefix>
+		<VersionPrefix>1.10.0</VersionPrefix>
 		<VersionSuffix>dev</VersionSuffix>
-		<BaseCommitForCount>5772c12a55325bf8f8f208a16c24a16c9a7879ae</BaseCommitForCount>
+		<BaseCommitForCount>49229894e4743ed1bdb234e4f31c2795bfc2454e</BaseCommitForCount>
 		<RepositoryUrl>https://github.com/ittegrat/ExcelDna</RepositoryUrl>
 
 		<LibDistFolder>$(SolutionDir)..\_libs_</LibDistFolder>
@@ -36,6 +36,7 @@
 			<VerDefsPath>$(SolutionDir)verdefs.h</VerDefsPath>
 			<ReleaseBase>20000</ReleaseBase>
 			<CommitCount>0</CommitCount>
+			<BranchName></BranchName>
 		</PropertyGroup>
 
 		<Exec Condition="'$(BaseCommitForCount)' != ''"
@@ -46,7 +47,8 @@
 			<Output TaskParameter="ConsoleOutput" PropertyName="CommitCount" />
 		</Exec>
 
-		<Exec Command="$(GitCMD) branch --show-current"
+		<Exec Condition="'$(BranchName)' == ''"
+					Command="$(GitCMD) branch --show-current"
 					ConsoleToMSBuild="true"
 					StandardOutputImportance="normal"
 		>
