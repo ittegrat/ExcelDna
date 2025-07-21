@@ -28,6 +28,7 @@
     <Reference Include="Microsoft.Office.Interop.Excel">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
+    <Reference Include="Microsoft.VisualBasic" />
   </ItemGroup>
 
   <PropertyGroup>
