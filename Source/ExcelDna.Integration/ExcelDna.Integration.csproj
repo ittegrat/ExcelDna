@@ -1,8 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
     
-    <TargetFrameworks>net462;net6.0-windows</TargetFrameworks>
+    <TargetFrameworks>net462</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -11,18 +13,30 @@
     <AssemblyTitle>Excel-DNA Integration Library</AssemblyTitle>
     <Description>Integration library for Excel-DNA</Description>
 
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\assets\exceldna.snk</AssemblyOriginatorKeyFile>
     
+    <AssemblySearchPaths>$(AssemblySearchPaths);{GAC}</AssemblySearchPaths>
+
   </PropertyGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Office.Interop.Excel">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="Microsoft.VisualBasic" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ExcelDna.Interop" Version="15.0.1" />
-  </ItemGroup>
+  <PropertyGroup>
+    <CleanDependsOn>$(CleanDependsOn);Restore;</CleanDependsOn>
+  </PropertyGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net462' And '$(Configuration)' == 'Release'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LibDistFolder)" />
+  </Target>
 
 </Project>

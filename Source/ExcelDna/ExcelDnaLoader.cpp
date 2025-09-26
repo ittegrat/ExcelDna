@@ -406,7 +406,11 @@ HRESULT LoadAppDomain(ICorRuntimeHostPtr pHost, std::wstring addInFullPath, bool
 
 	// Check if a .config file exists next to the .xll as MyAddIn.xll.config. Use it if it exists.
 	std::wstring configFileName = addInFullPath + L".config";
-	if (FileExists(configFileName.c_str()))
+	if (EnvConfigExists(configFileName))
+	{
+		pAppDomainSetup->put_ConfigurationFile(_bstr_t(configFileName.c_str()));
+	}
+	else if (FileExists(configFileName.c_str()))
 	{
 		pAppDomainSetup->put_ConfigurationFile(_bstr_t(configFileName.c_str()));
 	}

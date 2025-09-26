@@ -1,7 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
-    <TargetFrameworks>net462;net6.0-windows</TargetFrameworks>
+    <TargetFrameworks>net462</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -11,4 +13,10 @@
 
   <Import Project="..\ExcelDna.PackedResources\ExcelDna.PackedResources.projitems" Label="Shared" />
   
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <CleanDependsOn>$(CleanDependsOn);Restore;</CleanDependsOn>
+  </PropertyGroup>
+
 </Project>

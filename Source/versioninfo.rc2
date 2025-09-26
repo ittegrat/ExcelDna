@@ -7,17 +7,17 @@
 // Version
 //
 
-#define VER_FILEVERSION 1,9,0,7
-#define VER_FILEVERSION_STR "1.9.0.7"
+#include "verdefs.h"
+#include <winver.h>
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION VER_FILEVERSION
 PRODUCTVERSION VER_FILEVERSION
 FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
-FILEFLAGS 0x1L
+FILEFLAGS VS_FF_DEBUG | VS_FF_PATCHED
 #else
-FILEFLAGS 0x0L
+FILEFLAGS VS_FF_PATCHED
 #endif
 FILEOS 0x4L
 FILETYPE 0x2L
@@ -35,7 +35,7 @@ VALUE "InternalName", "ExcelDna"
 VALUE "LegalCopyright", "Copyright (C) 2005-2024 Govert van Drimmelen"
 VALUE "OriginalFilename", "ExcelDna.xll"
 VALUE "ProductName", "Excel-DNA Add-In Framework for Microsoft Excel"
-VALUE "ProductVersion", VER_FILEVERSION_STR
+VALUE "ProductVersion", VER_PRODVERSION
 END
 END
 BLOCK "VarFileInfo"

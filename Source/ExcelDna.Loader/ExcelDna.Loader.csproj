@@ -1,14 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk"/>
 
   <PropertyGroup>
 
-    <TargetFrameworks>net462;net6.0-windows</TargetFrameworks>
+    <TargetFrameworks>net462</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <AssemblyTitle>ExcelDna Managed Loader</AssemblyTitle>
     <Description>Managed loader library for Excel-Dna</Description>
 
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\assets\exceldna.snk</AssemblyOriginatorKeyFile>
 
 
@@ -17,4 +19,11 @@
   <ItemGroup>
     <ProjectReference Include="..\ExcelDna.Integration\ExcelDna.Integration.csproj" />
   </ItemGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk"/>
+
+  <PropertyGroup>
+    <CleanDependsOn>$(CleanDependsOn);Restore;</CleanDependsOn>
+  </PropertyGroup>
+
 </Project>

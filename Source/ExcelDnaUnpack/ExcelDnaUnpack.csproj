@@ -3,33 +3,32 @@
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
-    
+
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net462</TargetFrameworks>
-    <RuntimeIdentifiers>win7-x86;win7-x64</RuntimeIdentifiers>
-    <UseRidGraph>true</UseRidGraph>
-    
-    <AssemblyTitle>ExcelDnaPack</AssemblyTitle>
-    <Description>Excel-DNA Packing Tool</Description>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+
+    <AssemblyTitle>ExcelDnaUnpack</AssemblyTitle>
+    <Description>Excel-DNA Unpacking Tool</Description>
+    <Copyright>Copyright Â© 2019-2024 Ittegrat</Copyright>
 
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\assets\exceldna.snk</AssemblyOriginatorKeyFile>
+
   </PropertyGroup>
-  
+
+  <ItemGroup>
+    <Compile Include="..\ExcelDna.PackedResources\Lzma\*.cs" LinkBase="Lzma" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net462' And '$(Configuration)' == 'Release'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LibDistFolder)" />
+  </Target>
+
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
     <CleanDependsOn>$(CleanDependsOn);Restore;</CleanDependsOn>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ExcelDna.Integration\ExcelDna.Integration.csproj" />
-  </ItemGroup>
-
-  <Import Project="..\ExcelDna.PackedResources\ExcelDna.PackedResources.projitems" Label="Shared" />
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net462' And '$(Configuration)' == 'Release'">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LibDistFolder)" />
-  </Target>
 
 </Project>

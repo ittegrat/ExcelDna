@@ -173,6 +173,8 @@ namespace ExcelDna.Loader
             {
                 if (func.Name != null)
                     Name = func.Name;
+                if (func.Prefix != null)
+                    Name = func.Prefix + Name;
                 if (func.Description != null)
                     Description = func.Description;
                 if (func.Category != null)
@@ -195,6 +197,8 @@ namespace ExcelDna.Loader
             {
                 if (cmd.Name != null)
                     Name = cmd.Name;
+                if (cmd.Prefix != null)
+                    Name = cmd.Prefix + Name;
                 if (cmd.Description != null)
                     Description = cmd.Description;
                 if (cmd.HelpTopic != null)
@@ -262,22 +266,53 @@ namespace ExcelDna.Loader
             foreach (MethodInfo method in methodInfos)
             {
                 // If we don't find an attribute, we'll set a null in the list at a token
-                methodAttributes.Add(null);
+                object methodAttribute = null;
                 foreach (object att in method.GetCustomAttributes(false))
                 {
-                    if (att is ExcelFunctionAttribute || att is ExcelCommandAttribute)
+                    if (att is ExcelFunctionAttribute fa)
                     {
-                        // Set last value to this attribute
-                        methodAttributes[methodAttributes.Count - 1] = att;
+                        foreach (object dtAtt in method.DeclaringType.GetCustomAttributes(false))
+                        {
+                            if (dtAtt is ExcelFunctionAttribute dfa)
+                            {
+                                fa.MergeGroupAttributes(dfa);
+                                break;
+                            }
+                        }
+                        methodAttribute = att;
+                        break;
+                    }
+                    else if (att is ExcelCommandAttribute ca)
+                    {
+                        foreach (object dtAtt in method.DeclaringType.GetCustomAttributes(false))
+                        {
+                            if (dtAtt is ExcelCommandAttribute dca)
+                            {
+                                ca.MergeGroupAttributes(dca);
+                                break;
+                            }
+                        }
+                        methodAttribute = att;
                         break;
                     }
                     if (att is DescriptionAttribute)
                     {
                         // Some compatibility - use Description if no Excel* attribute
-                        if (methodAttributes[methodAttributes.Count - 1] == null)
-                            methodAttributes[methodAttributes.Count - 1] = att;
+                        if (methodAttribute == null) methodAttribute = att;
                     }
                 }
+                if (methodAttribute == null)
+                {
+                    foreach (object dtAtt in method.DeclaringType.GetCustomAttributes(false))
+                    {
+                        if (dtAtt is ExcelFunctionAttribute || dtAtt is ExcelCommandAttribute)
+                        {
+                            methodAttribute = dtAtt;
+                            break;
+                        }
+                    }
+                }
+                methodAttributes.Add(methodAttribute);
 
                 List<object> argAttribs = new List<object>();
                 argumentAttributes.Add(argAttribs);

@@ -1,0 +1,254 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.Loader", "ExcelDna.Loader\ExcelDna.Loader.csproj", "{59AE5BC6-F37E-4CE3-BAE3-796F807A9882}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExcelDna", "ExcelDna\ExcelDna.vcxproj", "{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}"
+	ProjectSection(ProjectDependencies) = postProject
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9} = {196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882} = {59AE5BC6-F37E-4CE3-BAE3-796F807A9882}
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3} = {DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9} = {FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.Integration", "ExcelDna.Integration\ExcelDna.Integration.csproj", "{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDnaPack", "ExcelDnaPack\ExcelDnaPack.csproj", "{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882} = {59AE5BC6-F37E-4CE3-BAE3-796F807A9882}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.AddIn.Tasks", "ExcelDna.AddIn.Tasks\ExcelDna.AddIn.Tasks.csproj", "{B5CC04D3-0507-4431-9F45-7C60BAC3047A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601} = {A8D668E2-63C1-4F4E-A01E-E026C6E4D601}
+		{A9887347-3E93-4E4E-96DF-227648E57B60} = {A9887347-3E93-4E4E-96DF-227648E57B60}
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9} = {FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{511CE610-5E55-457F-B818-1522D1A96727}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.AddIn.Tasks.IntegrationTests", "Tests\ExcelDna.AddIn.Tasks.IntegrationTests\ExcelDna.AddIn.Tasks.IntegrationTests.csproj", "{C9CAD3E4-E6F1-4BD2-AF89-57950AB15388}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.IntegrationTests", "Tests\ExcelDna.IntegrationTests\ExcelDna.IntegrationTests.csproj", "{3AFD9408-48AC-43B4-8E55-4E7D73168FEA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601} = {A8D668E2-63C1-4F4E-A01E-E026C6E4D601}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Package", "Package", "{2A988F4A-6C24-49EB-950D-0984E2CAEE20}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ExcelDna.AddIn", "ExcelDna.AddIn", "{42A3C1DE-5D65-4BC6-BA90-3FDEE42A77C9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{D0B02D05-F536-4C32-9DC0-BA2B5EEAEAB7}"
+	ProjectSection(SolutionItems) = preProject
+		..\Package\ExcelDna.AddIn\content\ExcelDna-Template.dna = ..\Package\ExcelDna.AddIn\content\ExcelDna-Template.dna
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDnaUnpack", "ExcelDnaUnpack\ExcelDnaUnpack.csproj", "{1E872976-6721-4B20-A19A-1DA817CCCCD0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Version", "Version", "{23634D27-D704-45E9-B8DD-6214E44287B2}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		versioninfo.rc2 = versioninfo.rc2
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MasterBuild", "MasterBuild", "{CEC18D63-D3C7-44F6-8752-C2E53FC6BAF8}"
+	ProjectSection(SolutionItems) = preProject
+		..\MasterBuild\Directory.Build.props = ..\MasterBuild\Directory.Build.props
+		..\MasterBuild\Directory.Build.targets = ..\MasterBuild\Directory.Build.targets
+		..\MasterBuild\MasterBuild.cmd = ..\MasterBuild\MasterBuild.cmd
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{D348847B-A82B-4663-8802-0509AD95399B}"
+	ProjectSection(SolutionItems) = preProject
+		..\Build\build.bat = ..\Build\build.bat
+		..\Build\BuildPackages.bat = ..\Build\BuildPackages.bat
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.ManagedHost", "ExcelDna.ManagedHost\ExcelDna.ManagedHost.csproj", "{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9} = {196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExcelDna.Host", "ExcelDna.Host\ExcelDna.Host.vcxproj", "{A9887347-3E93-4E4E-96DF-227648E57B60}"
+	ProjectSection(ProjectDependencies) = postProject
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9} = {196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882} = {59AE5BC6-F37E-4CE3-BAE3-796F807A9882}
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3} = {DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9} = {FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.Test", "ExcelDna.Test\ExcelDna.Test.csproj", "{BA1BBC2E-E1A6-4682-8901-F596A21FD253}"
+	ProjectSection(ProjectDependencies) = postProject
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882} = {59AE5BC6-F37E-4CE3-BAE3-796F807A9882}
+		{A9887347-3E93-4E4E-96DF-227648E57B60} = {A9887347-3E93-4E4E-96DF-227648E57B60}
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3} = {DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9} = {FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}
+	EndProjectSection
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "ExcelDna.PackedResources", "ExcelDna.PackedResources\ExcelDna.PackedResources.shproj", "{7EBB8FA9-A153-422E-B454-144C3FB03450}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.PackedResourcesTests", "Tests\ExcelDna.PackedResourcesTests\ExcelDna.PackedResourcesTests.csproj", "{28D046D4-B414-4DAF-818F-897A97B921DF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.AddIn.RuntimeTests", "Tests\ExcelDna.AddIn.RuntimeTests\ExcelDna.AddIn.RuntimeTests.csproj", "{297D72F7-FD48-4751-B2EF-F97DBAD0C901}"
+	ProjectSection(ProjectDependencies) = postProject
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882} = {59AE5BC6-F37E-4CE3-BAE3-796F807A9882}
+		{A9887347-3E93-4E4E-96DF-227648E57B60} = {A9887347-3E93-4E4E-96DF-227648E57B60}
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3} = {DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9} = {FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.AddIn.Tasks.IntegrationRuntimeTests", "Tests\ExcelDna.AddIn.Tasks.IntegrationRuntimeTests\ExcelDna.AddIn.Tasks.IntegrationRuntimeTests.csproj", "{238F95C5-87DF-4973-88C2-5A9509C3935F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelDna.RuntimeTests", "Tests\ExcelDna.RuntimeTests\ExcelDna.RuntimeTests.csproj", "{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelDna.AddIn.RegistrationSample", "Tests\ExcelDna.AddIn.RegistrationSample\ExcelDna.AddIn.RegistrationSample.csproj", "{55AEB960-2857-323E-3E82-5A8AA5913A18}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A9887347-3E93-4E4E-96DF-227648E57B60} = {A9887347-3E93-4E4E-96DF-227648E57B60}
+	EndProjectSection
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ExcelDna.AddIn.RegistrationSampleFS", "Tests\ExcelDna.AddIn.RegistrationSampleFS\ExcelDna.AddIn.RegistrationSampleFS.fsproj", "{7CA501E1-FB74-4903-B34D-EFE513C5B428}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A9887347-3E93-4E4E-96DF-227648E57B60} = {A9887347-3E93-4E4E-96DF-227648E57B60}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelDna.RegistrationTests", "Tests\ExcelDna.RegistrationTests\ExcelDna.RegistrationTests.csproj", "{151AE960-6320-402D-BDD0-D76DF96F2BD7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882}.Debug|Win32.Build.0 = Debug|Any CPU
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882}.Debug|x64.Build.0 = Debug|Any CPU
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882}.Release|Win32.ActiveCfg = Release|Any CPU
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882}.Release|Win32.Build.0 = Release|Any CPU
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882}.Release|x64.ActiveCfg = Release|Any CPU
+		{59AE5BC6-F37E-4CE3-BAE3-796F807A9882}.Release|x64.Build.0 = Release|Any CPU
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}.Debug|Win32.Build.0 = Debug|Win32
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}.Debug|x64.ActiveCfg = Debug|x64
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}.Debug|x64.Build.0 = Debug|x64
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}.Release|Win32.ActiveCfg = Release|Win32
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}.Release|Win32.Build.0 = Release|Win32
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}.Release|x64.ActiveCfg = Release|x64
+		{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}.Release|x64.Build.0 = Release|x64
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}.Debug|Win32.Build.0 = Debug|Any CPU
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}.Debug|x64.Build.0 = Debug|Any CPU
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}.Release|Win32.ActiveCfg = Release|Any CPU
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}.Release|Win32.Build.0 = Release|Any CPU
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}.Release|x64.ActiveCfg = Release|Any CPU
+		{196735BC-5A5C-4A21-9FE4-EC01CB7F3DE9}.Release|x64.Build.0 = Release|Any CPU
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}.Debug|Win32.Build.0 = Debug|Any CPU
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}.Debug|x64.Build.0 = Debug|Any CPU
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}.Release|Win32.ActiveCfg = Release|Any CPU
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}.Release|Win32.Build.0 = Release|Any CPU
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}.Release|x64.ActiveCfg = Release|Any CPU
+		{FD7F2EE3-9922-4825-96A2-BE2C877BAEB9}.Release|x64.Build.0 = Release|Any CPU
+		{B5CC04D3-0507-4431-9F45-7C60BAC3047A}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{B5CC04D3-0507-4431-9F45-7C60BAC3047A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B5CC04D3-0507-4431-9F45-7C60BAC3047A}.Release|Win32.ActiveCfg = Release|Any CPU
+		{B5CC04D3-0507-4431-9F45-7C60BAC3047A}.Release|x64.ActiveCfg = Release|Any CPU
+		{C9CAD3E4-E6F1-4BD2-AF89-57950AB15388}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{C9CAD3E4-E6F1-4BD2-AF89-57950AB15388}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C9CAD3E4-E6F1-4BD2-AF89-57950AB15388}.Release|Win32.ActiveCfg = Release|Any CPU
+		{C9CAD3E4-E6F1-4BD2-AF89-57950AB15388}.Release|x64.ActiveCfg = Release|Any CPU
+		{3AFD9408-48AC-43B4-8E55-4E7D73168FEA}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{3AFD9408-48AC-43B4-8E55-4E7D73168FEA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3AFD9408-48AC-43B4-8E55-4E7D73168FEA}.Release|Win32.ActiveCfg = Release|Any CPU
+		{3AFD9408-48AC-43B4-8E55-4E7D73168FEA}.Release|x64.ActiveCfg = Release|Any CPU
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}.Debug|Win32.Build.0 = Debug|Any CPU
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}.Debug|x64.Build.0 = Debug|Any CPU
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}.Release|Win32.ActiveCfg = Release|Any CPU
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}.Release|Win32.Build.0 = Release|Any CPU
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}.Release|x64.ActiveCfg = Release|Any CPU
+		{DC10CEC8-C6CE-4148-838F-C3DD4EA2A2A3}.Release|x64.Build.0 = Release|Any CPU
+		{1E872976-6721-4B20-A19A-1DA817CCCCD0}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{1E872976-6721-4B20-A19A-1DA817CCCCD0}.Debug|Win32.Build.0 = Debug|Any CPU
+		{1E872976-6721-4B20-A19A-1DA817CCCCD0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1E872976-6721-4B20-A19A-1DA817CCCCD0}.Debug|x64.Build.0 = Debug|Any CPU
+		{1E872976-6721-4B20-A19A-1DA817CCCCD0}.Release|Win32.ActiveCfg = Release|Any CPU
+		{1E872976-6721-4B20-A19A-1DA817CCCCD0}.Release|Win32.Build.0 = Release|Any CPU
+		{1E872976-6721-4B20-A19A-1DA817CCCCD0}.Release|x64.ActiveCfg = Release|Any CPU
+		{1E872976-6721-4B20-A19A-1DA817CCCCD0}.Release|x64.Build.0 = Release|Any CPU
+		{A9887347-3E93-4E4E-96DF-227648E57B60}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A9887347-3E93-4E4E-96DF-227648E57B60}.Debug|Win32.Build.0 = Debug|Win32
+		{A9887347-3E93-4E4E-96DF-227648E57B60}.Debug|x64.ActiveCfg = Debug|x64
+		{A9887347-3E93-4E4E-96DF-227648E57B60}.Debug|x64.Build.0 = Debug|x64
+		{A9887347-3E93-4E4E-96DF-227648E57B60}.Release|Win32.ActiveCfg = Release|Win32
+		{A9887347-3E93-4E4E-96DF-227648E57B60}.Release|Win32.Build.0 = Release|Win32
+		{A9887347-3E93-4E4E-96DF-227648E57B60}.Release|x64.ActiveCfg = Release|x64
+		{A9887347-3E93-4E4E-96DF-227648E57B60}.Release|x64.Build.0 = Release|x64
+		{BA1BBC2E-E1A6-4682-8901-F596A21FD253}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{BA1BBC2E-E1A6-4682-8901-F596A21FD253}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BA1BBC2E-E1A6-4682-8901-F596A21FD253}.Release|Win32.ActiveCfg = Release|Any CPU
+		{BA1BBC2E-E1A6-4682-8901-F596A21FD253}.Release|x64.ActiveCfg = Release|Any CPU
+		{28D046D4-B414-4DAF-818F-897A97B921DF}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{28D046D4-B414-4DAF-818F-897A97B921DF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{28D046D4-B414-4DAF-818F-897A97B921DF}.Release|Win32.ActiveCfg = Release|Any CPU
+		{28D046D4-B414-4DAF-818F-897A97B921DF}.Release|x64.ActiveCfg = Release|Any CPU
+		{297D72F7-FD48-4751-B2EF-F97DBAD0C901}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{297D72F7-FD48-4751-B2EF-F97DBAD0C901}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{297D72F7-FD48-4751-B2EF-F97DBAD0C901}.Release|Win32.ActiveCfg = Release|Any CPU
+		{297D72F7-FD48-4751-B2EF-F97DBAD0C901}.Release|x64.ActiveCfg = Release|Any CPU
+		{238F95C5-87DF-4973-88C2-5A9509C3935F}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{238F95C5-87DF-4973-88C2-5A9509C3935F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{238F95C5-87DF-4973-88C2-5A9509C3935F}.Release|Win32.ActiveCfg = Release|Any CPU
+		{238F95C5-87DF-4973-88C2-5A9509C3935F}.Release|x64.ActiveCfg = Release|Any CPU
+		{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}.Release|Win32.ActiveCfg = Release|Any CPU
+		{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B}.Release|x64.ActiveCfg = Release|Any CPU
+		{55AEB960-2857-323E-3E82-5A8AA5913A18}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{55AEB960-2857-323E-3E82-5A8AA5913A18}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{55AEB960-2857-323E-3E82-5A8AA5913A18}.Release|Win32.ActiveCfg = Release|Any CPU
+		{55AEB960-2857-323E-3E82-5A8AA5913A18}.Release|x64.ActiveCfg = Release|Any CPU
+		{7CA501E1-FB74-4903-B34D-EFE513C5B428}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{7CA501E1-FB74-4903-B34D-EFE513C5B428}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7CA501E1-FB74-4903-B34D-EFE513C5B428}.Release|Win32.ActiveCfg = Release|Any CPU
+		{7CA501E1-FB74-4903-B34D-EFE513C5B428}.Release|x64.ActiveCfg = Release|Any CPU
+		{151AE960-6320-402D-BDD0-D76DF96F2BD7}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{151AE960-6320-402D-BDD0-D76DF96F2BD7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{151AE960-6320-402D-BDD0-D76DF96F2BD7}.Release|Win32.ActiveCfg = Release|Any CPU
+		{151AE960-6320-402D-BDD0-D76DF96F2BD7}.Release|x64.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C9CAD3E4-E6F1-4BD2-AF89-57950AB15388} = {511CE610-5E55-457F-B818-1522D1A96727}
+		{3AFD9408-48AC-43B4-8E55-4E7D73168FEA} = {511CE610-5E55-457F-B818-1522D1A96727}
+		{42A3C1DE-5D65-4BC6-BA90-3FDEE42A77C9} = {2A988F4A-6C24-49EB-950D-0984E2CAEE20}
+		{D0B02D05-F536-4C32-9DC0-BA2B5EEAEAB7} = {42A3C1DE-5D65-4BC6-BA90-3FDEE42A77C9}
+		{BA1BBC2E-E1A6-4682-8901-F596A21FD253} = {511CE610-5E55-457F-B818-1522D1A96727}
+		{28D046D4-B414-4DAF-818F-897A97B921DF} = {511CE610-5E55-457F-B818-1522D1A96727}
+		{297D72F7-FD48-4751-B2EF-F97DBAD0C901} = {511CE610-5E55-457F-B818-1522D1A96727}
+		{238F95C5-87DF-4973-88C2-5A9509C3935F} = {511CE610-5E55-457F-B818-1522D1A96727}
+		{8D04B68B-1EFE-48DC-A0B5-D7ACC293694B} = {511CE610-5E55-457F-B818-1522D1A96727}
+		{55AEB960-2857-323E-3E82-5A8AA5913A18} = {511CE610-5E55-457F-B818-1522D1A96727}
+		{7CA501E1-FB74-4903-B34D-EFE513C5B428} = {511CE610-5E55-457F-B818-1522D1A96727}
+		{151AE960-6320-402D-BDD0-D76DF96F2BD7} = {511CE610-5E55-457F-B818-1522D1A96727}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {69EF43B0-B903-4775-BC81-C7E7E012EDA3}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		ExcelDna.PackedResources\ExcelDna.PackedResources.projitems*{28d046d4-b414-4daf-818f-897a97b921df}*SharedItemsImports = 5
+		ExcelDna.PackedResources\ExcelDna.PackedResources.projitems*{7ebb8fa9-a153-422e-b454-144c3fb03450}*SharedItemsImports = 13
+		ExcelDna.PackedResources\ExcelDna.PackedResources.projitems*{b5cc04d3-0507-4431-9f45-7c60bac3047a}*SharedItemsImports = 5
+		ExcelDna.PackedResources\ExcelDna.PackedResources.projitems*{dc10cec8-c6ce-4148-838f-c3dd4ea2a2a3}*SharedItemsImports = 5
+		ExcelDna.PackedResources\ExcelDna.PackedResources.projitems*{fd7f2ee3-9922-4825-96a2-be2c877baeb9}*SharedItemsImports = 5
+	EndGlobalSection
+EndGlobal

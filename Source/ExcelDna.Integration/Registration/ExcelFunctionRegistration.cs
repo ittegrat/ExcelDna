@@ -116,6 +116,14 @@ namespace ExcelDna.Registration
                 var funcAtt = att as ExcelFunctionAttribute;
                 if (funcAtt != null)
                 {
+                    foreach (var dtAtt in methodInfo.DeclaringType.GetCustomAttributes(true))
+                    {
+                        if (dtAtt is ExcelFunctionAttribute dtFuncAtt)
+                        {
+                            funcAtt.MergeGroupAttributes(dtFuncAtt);
+                            break;
+                        }
+                    }
                     FunctionAttribute = funcAtt;
                     // At least ensure that name is set - from the method if need be.
                     if (string.IsNullOrEmpty(FunctionAttribute.Name))
@@ -130,6 +138,14 @@ namespace ExcelDna.Registration
             if (FunctionAttribute == null)
             {
                 FunctionAttribute = new ExcelFunctionAttribute { Name = methodInfo.Name };
+                foreach (var dtAtt in methodInfo.DeclaringType.GetCustomAttributes(true))
+                {
+                    if (dtAtt is ExcelFunctionAttribute dtFuncAtt)
+                    {
+                        FunctionAttribute.MergeGroupAttributes(dtFuncAtt);
+                        break;
+                    }
+                }
             }
 
             ParameterRegistrations = methodInfo.GetParameters().Select(pi => new ExcelParameterRegistration(pi)).ToList();

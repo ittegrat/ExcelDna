@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{A8D668E2-63C1-4F4E-A01E-E026C6E4D601}</ProjectGuid>
     <RootNamespace>ExcelDna</RootNamespace>
     <Keyword>Win32Proj</Keyword>
@@ -142,7 +143,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <Optimization>Disabled</Optimization>
+      <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -169,7 +170,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <Optimization>Disabled</Optimization>
+      <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -200,6 +201,10 @@
         copy "$(SolutionDir)ExcelDna.Loader\bin\$(Configuration)\$(TargetFramework)\ExcelDna.Loader.*" "$(TargetDir)" 
         copy "$(SolutionDir)ExcelDna.Integration\bin\$(Configuration)\$(TargetFramework)\ExcelDna.Integration.*" "$(TargetDir)" 
         "$(SolutionDir)ExcelDnaPack\bin\$(Configuration)\$(TargetFramework)\ExcelDnaPack.exe" PackXllBuild "$(OutDir)$(TargetName).xll" $(Configuration)
+        if [$(Configuration)]==[Release] (
+          if not exist "$(SolutionDir)..\_libs_" mkdir "$(SolutionDir)..\_libs_"
+          copy "$(TargetPath)" "$(SolutionDir)..\_libs_\"
+        )
       </Command>
       <Message>Copying ExcelDna.ManagedHost, ExcelDna.Loader and ExcelDna.Integration to target dir</Message>
     </PostBuildEvent>
