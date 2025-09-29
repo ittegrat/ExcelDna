@@ -143,8 +143,12 @@ namespace ExcelDnaUnpack
             if (r.ResourceType == ResourceType.VERSION)
               continue;
 
-            if (r.Name == "EXCELDNA.LOADER" || r.Name == "EXCELDNA.INTEGRATION")
-              continue;
+            switch (r.Name) {
+              case "EXCELDNA.LOADER":
+              case "EXCELDNA.INTEGRATION":
+              case "EXCELDNA.MANAGEDHOST":
+                continue;
+            }
 
             Console.WriteLine($"  - {r.Type} - {r.Name}");
 
