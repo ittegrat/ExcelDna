@@ -17,7 +17,7 @@ namespace ExcelDnaUnpack
       var resType = baseType.Assembly.GetTypes()
         .Where(t =>
           baseType.IsAssignableFrom(t) &&
-          0 == String.Compare(t.Name, rt.ToString(), StringComparison.InvariantCultureIgnoreCase)
+          0 == String.Compare(t.Name, rt.ToString(), StringComparison.OrdinalIgnoreCase)
         )
         .FirstOrDefault()
       ;
@@ -56,28 +56,25 @@ namespace ExcelDnaUnpack
 
     public int CompareTo(Resource other) {
 
-      if (Type[0] == '#') {
+      if (Type[0] == '#' && other.Type[0] == '#') {
 
-        if (other.Type[0] == '#') {
+        int t1 = int.Parse(Type.Substring(1));
+        int t2 = int.Parse(other.Type.Substring(1));
 
-          int t1 = int.Parse(Type.Substring(1));
-          int t2 = int.Parse(other.Type.Substring(1));
-
-          if (t1 == t2)
-            return (int.Parse(Name.Substring(1)) - int.Parse(other.Name.Substring(1)));
-          else
-            return t1 - t2;
-
-        } else
-          return 1;
+        int res = t1 - t2;
+        if (res == 0)
+          res = int.Parse(Name.Substring(1)) - int.Parse(other.Name.Substring(1));
+        return res;
 
       }
 
-      if (other.Type[0] == '#')
-        return other.CompareTo(this);
+      if (Type[0] == '#') return 1;
+      if (other.Type[0] == '#') return -1;
 
-      int t = String.Compare(Type, other.Type, StringComparison.InvariantCultureIgnoreCase);
-      return (t != 0 ? t : String.Compare(Name, other.Name, StringComparison.InvariantCultureIgnoreCase));
+      int ans = String.Compare(Type, other.Type, StringComparison.OrdinalIgnoreCase);
+      if (ans == 0)
+        ans = String.Compare(Name, other.Name, StringComparison.OrdinalIgnoreCase);
+      return ans;
 
     }
 
