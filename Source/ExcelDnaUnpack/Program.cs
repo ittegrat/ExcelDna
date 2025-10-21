@@ -150,6 +150,12 @@ namespace ExcelDnaUnpack
           case 'i':
             ans |= ResourceType.IMAGE;
             break;
+          case 'n':
+            ans |= ResourceType.NATIVELIBRARY;
+            break;
+          case 'o':
+            ans |= ResourceType.DOC;
+            break;
           case 'p':
             ans |= ResourceType.PDB;
             break;
@@ -228,6 +234,8 @@ Resource codes:
   c: config
   d: dna
   i: images
+  n: native libs
+  o: doc
   p: pdbs
   s: sources
   t: typelibs

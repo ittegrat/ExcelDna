@@ -16,7 +16,9 @@ namespace ExcelDnaUnpack
     SOURCE = 0x40,
     TYPELIB = 0x80,
     VERSION = 0x100,
-    KNOWN = ASSEMBLY | CONFIG | DNA | IMAGE | PDB | SOURCE | TYPELIB | VERSION,
+    NATIVELIBRARY = 0x200,
+    DOC = 0x400,
+    KNOWN = ASSEMBLY | CONFIG | DNA | IMAGE | PDB | SOURCE | TYPELIB | VERSION | NATIVELIBRARY | DOC,
     ALL = KNOWN | UNKNOWN
   }
 
@@ -38,17 +40,25 @@ namespace ExcelDnaUnpack
         case "DNA_LZMA":
           return ResourceType.DNA;
 
+        case "DOC":
+        case "DOC_LZMA":
+          return ResourceType.DOC;
+
         case "IMAGE":
         case "IMAGE_LZMA":
           return ResourceType.IMAGE;
 
-        case "SOURCE":
-        case "SOURCE_LZMA":
-          return ResourceType.SOURCE;
+        case "NATIVE_LIBRARY":
+        case "NATIVE_LIBRARY_LZMA":
+          return ResourceType.NATIVELIBRARY;
 
         case "PDB":
         case "PDB_LZMA":
           return ResourceType.PDB;
+
+        case "SOURCE":
+        case "SOURCE_LZMA":
+          return ResourceType.SOURCE;
 
         case "TYPELIB":
           return ResourceType.TYPELIB;
