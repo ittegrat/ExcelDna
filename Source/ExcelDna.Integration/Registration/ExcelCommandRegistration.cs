@@ -61,6 +61,14 @@ namespace ExcelDna.Registration
                 var cmdAtt = att as ExcelCommandAttribute;
                 if (cmdAtt != null)
                 {
+                    foreach (var dtAtt in methodInfo.DeclaringType.GetCustomAttributes(true))
+                    {
+                        if (dtAtt is ExcelCommandAttribute dtCmdAtt)
+                        {
+                            cmdAtt.MergeGroupAttributes(dtCmdAtt);
+                            break;
+                        }
+                    }
                     CommandAttribute = cmdAtt;
                     // At least ensure that name is set - from the method if need be.
                     if (string.IsNullOrEmpty(CommandAttribute.Name))
@@ -75,12 +83,22 @@ namespace ExcelDna.Registration
             if (CommandAttribute == null)
             {
                 CommandAttribute = new ExcelCommandAttribute { Name = methodInfo.Name };
+                foreach (var dtAtt in methodInfo.DeclaringType.GetCustomAttributes(true))
+                {
+                    if (dtAtt is ExcelCommandAttribute dtCmdAtt)
+                    {
+                        CommandAttribute.MergeGroupAttributes(dtCmdAtt);
+                        break;
+                    }
+                }
             }
         }
 
         internal static bool IsCommand(MethodInfo methodInfo)
         {
-            return methodInfo.GetCustomAttribute<ExcelCommandAttribute>() != null;
+            return methodInfo.GetCustomAttribute<ExcelCommandAttribute>() != null ||
+                   methodInfo.DeclaringType.GetCustomAttribute<ExcelCommandAttribute>() != null ||
+                   methodInfo.ReturnType == typeof(void);
         }
     }
 }

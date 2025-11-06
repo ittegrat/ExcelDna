@@ -22,7 +22,7 @@
 		-->
 		<VersionPrefix>1.9.0</VersionPrefix>
 		<VersionSuffix></VersionSuffix>
-		<BaseCommitForCount></BaseCommitForCount>
+		<BaseCommitForCount>30cbb038575eed8bc48f57c9ba496e615bfa9f89</BaseCommitForCount>
 		<BranchName>ittegrat</BranchName>
 		<RepositoryUrl>https://github.com/ittegrat/ExcelDna</RepositoryUrl>
 

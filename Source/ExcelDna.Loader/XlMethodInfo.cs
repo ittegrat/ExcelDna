@@ -305,8 +305,9 @@ namespace ExcelDna.Loader
                 {
                     foreach (object dtAtt in method.DeclaringType.GetCustomAttributes(false))
                     {
-                        if (dtAtt is ExcelFunctionAttribute || dtAtt is ExcelCommandAttribute)
-                        {
+                        if (dtAtt is ExcelCommandAttribute ||
+                           (dtAtt is ExcelFunctionAttribute && method.ReturnType != typeof(void))
+                        ) {
                             methodAttribute = dtAtt;
                             break;
                         }
