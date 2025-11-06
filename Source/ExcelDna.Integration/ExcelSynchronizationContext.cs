@@ -10,9 +10,14 @@ using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Windows.Forms;
 using ExcelDna.Integration.Rtd;
 using ExcelDna.Logging;
+
+#if USE_WINDOWS_FORMS
+using System.Windows.Forms;
+#else
+using ExcelDna.Integration.Win32;
+#endif
 
 namespace ExcelDna.Integration
 {
@@ -239,7 +244,9 @@ namespace ExcelDna.Integration
         // Here we catch an InvalidOperationException that we throw from CallPenHelper below
         // This seems to need the special attribute too !?
         // TODO: NET6+: See notes at CallPenHelper
+#if NETFRAMEWORK
         [HandleProcessCorruptedStateExceptions]
+#endif
         public void ProcessRunSyncMacroMessage()
         {
             try
@@ -414,7 +421,7 @@ namespace ExcelDna.Integration
                     }
                     else
                     {
-                        if (   (int)result != E_FAIL
+                        if ((int)result != E_FAIL
                             && (int)result != E_NA)
                         {
                             Logger.Registration.Error("Unexpected return value from Application.Run(\"SyncMacro_...\") - " + result);

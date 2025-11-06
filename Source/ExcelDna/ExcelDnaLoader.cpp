@@ -713,7 +713,8 @@ void LoaderUnload()
 BOOL IsRunningOnCluster()
 {
 	// Our check is to see if the current process is called Excel.exe.
-	// Hopefully this doen't change soon.
+	// Hopefully this doesn't change soon.
+	// (Also added support for WPS Spreadsheets  - et.exe)
 	
 	TCHAR hostPathName[MAX_PATH];
 	DWORD count = GetModuleFileName(NULL, hostPathName, MAX_PATH);
@@ -721,7 +722,7 @@ BOOL IsRunningOnCluster()
 	std::wstring hostPath = hostPathName;
 	StripPath(hostPath);
 
-	if (CompareNoCase(hostPath, L"EXCEL.EXE") == 0)
+	if (CompareNoCase(hostPath, L"EXCEL.EXE") == 0 || CompareNoCase(hostPath, L"ET.EXE") == 0)
 	{
 		return false;
 	}

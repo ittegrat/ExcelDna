@@ -10,35 +10,20 @@ namespace ExcelDna.Integration.ExtendedRegistration
 {
     internal class Registration
     {
-        public static void RegisterExtended(IEnumerable<ExcelDna.Registration.ExcelFunctionRegistration> functions, IEnumerable<ExcelParameterConversion> parameterConversions, IEnumerable<ExcelFunctionProcessor> excelFunctionProcessors, IEnumerable<FunctionExecutionHandlerSelector> excelFunctionExecutionHandlerSelectors)
+        public class Configuration
         {
-            // Set the Parameter Conversions before they are applied by the ProcessParameterConversions call below.
-            // CONSIDER: We might change the registration to be an object...?
-            var conversionConfig = GetParameterConversionConfig(parameterConversions);
-
-            var functionHandlerConfig = GetFunctionExecutionHandlerConfig(excelFunctionExecutionHandlerSelectors);
-
-            Register(functions
-                .UpdateRegistrationsForRangeParameters()
-                .ProcessFunctionProcessors(excelFunctionProcessors, conversionConfig)
-                .ProcessParameterConversions(conversionConfig)
-                .ProcessAsyncRegistrations(nativeAsyncIfAvailable: false)
-                .ProcessParamsRegistrations()
-                .ProcessObjectHandles()
-                .ProcessFunctionExecutionHandlers(functionHandlerConfig)
-                );
+            public IEnumerable<ExcelParameterConversion> ParameterConversions { get; set; }
+            public IEnumerable<ExcelReturnConversion> ReturnConversions { get; set; }
+            public IEnumerable<ExcelFunctionProcessor> ExcelFunctionProcessors { get; set; }
+            public IEnumerable<FunctionExecutionHandlerSelector> ExcelFunctionExecutionHandlerSelectors { get; set; }
         }
 
-        public static void RegisterStandard(IEnumerable<ExcelDna.Registration.ExcelFunctionRegistration> functions, IEnumerable<FunctionExecutionHandlerSelector> excelFunctionExecutionHandlerSelectors)
+        public static void Register(IEnumerable<ExcelFunctionRegistration> functions, Configuration configuration)
         {
-            var functionHandlerConfig = GetFunctionExecutionHandlerConfig(excelFunctionExecutionHandlerSelectors);
-
-            Register(functions
-                .ProcessFunctionExecutionHandlers(functionHandlerConfig)
-                );
+            Register(Process(functions, configuration));
         }
 
-        internal static void Register(IEnumerable<ExcelDna.Registration.ExcelFunctionRegistration> functions)
+        public static void Register(IEnumerable<ExcelFunctionRegistration> functions)
         {
             functions = functions.ToList();
             var lambdas = functions.Select(reg => reg.FunctionLambda).ToList();
@@ -47,7 +32,26 @@ namespace ExcelDna.Integration.ExtendedRegistration
             ExcelIntegration.RegisterLambdaExpressions(lambdas, attribs, argAttribs);
         }
 
-        static ParameterConversionConfiguration GetParameterConversionConfig(IEnumerable<ExcelParameterConversion> parameterConversions)
+        public static IEnumerable<ExcelFunctionRegistration> Process(IEnumerable<ExcelFunctionRegistration> functions, Configuration configuration)
+        {
+            // Set the Parameter Conversions before they are applied by the ProcessParameterConversions call below.
+            // CONSIDER: We might change the registration to be an object...?
+            var conversionConfig = GetParameterConversionConfig(configuration.ParameterConversions, configuration.ReturnConversions);
+
+            var functionHandlerConfig = GetFunctionExecutionHandlerConfig(configuration.ExcelFunctionExecutionHandlerSelectors);
+
+            return functions
+                .UpdateRegistrationsForRangeParameters()
+                .ProcessFunctionProcessors(configuration.ExcelFunctionProcessors, conversionConfig)
+                .ProcessParameterConversions(conversionConfig)
+                .ProcessAsyncRegistrations(nativeAsyncIfAvailable: false)
+                .ProcessParamsRegistrations()
+                .ProcessObjectHandles()
+                .ProcessFunctionExecutionHandlers(functionHandlerConfig)
+                ;
+        }
+
+        private static ParameterConversionConfiguration GetParameterConversionConfig(IEnumerable<ExcelParameterConversion> parameterConversions, IEnumerable<ExcelReturnConversion> returnConversions)
         {
             // NOTE: The parameter conversion list is processed once per parameter.
             //       Parameter conversions will apply from most inside, to most outside.
@@ -79,7 +83,8 @@ namespace ExcelDna.Integration.ExtendedRegistration
                 .AddParameterConversion(ParameterConversions.GetOptionalConversion(treatEmptyAsMissing: true))
                 .AddParameterConversion(RangeConversion.GetRangeParameterConversion, null)
 
-                .AddParameterConversions(ParameterConversions.GetUserConversions(parameterConversions))
+                .AddParameterConversions(ParameterConversions.GetUserParameterConversions(parameterConversions))
+                .AddReturnConversions(ParameterConversions.GetUserReturnConversions(returnConversions))
 
                 // This is a conversion applied to the return value of the function
                 .AddReturnConversion((Complex value) => new double[2] { value.Real, value.Imaginary })
@@ -101,7 +106,7 @@ namespace ExcelDna.Integration.ExtendedRegistration
             return paramConversionConfig;
         }
 
-        static FunctionExecutionConfiguration GetFunctionExecutionHandlerConfig(IEnumerable<FunctionExecutionHandlerSelector> excelFunctionExecutionHandlerSelectors)
+        private static FunctionExecutionConfiguration GetFunctionExecutionHandlerConfig(IEnumerable<FunctionExecutionHandlerSelector> excelFunctionExecutionHandlerSelectors)
         {
             FunctionExecutionConfiguration result = new FunctionExecutionConfiguration();
 

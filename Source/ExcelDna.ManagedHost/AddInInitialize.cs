@@ -51,7 +51,25 @@ namespace ExcelDna.ManagedHost
                     (Func<string, int, byte[]>)AssemblyManager.GetResourceBytes,
                     (Func<string, Assembly>)_alc.LoadFromAssemblyPath,
                     (Func<byte[], byte[], Assembly>)_alc.LoadFromAssemblyBytes,
-                    (Action<TraceSource>)Logger.SetIntegrationTraceSource });
+                    (Action<TraceSource>)Logger.SetIntegrationTraceSource, false });
+
+            return initOK ? (short)1 : (short)0;
+        }
+
+        public static short InitializeNativeAOT(void* xlAddInExportInfoAddress, void* hModuleXll, void* pPathXLL, byte disableAssemblyContextUnload, void* pTempDirPath)
+        {
+            UnloadALC();
+            ProcessStartupHooks();
+
+            string pathXll = Marshal.PtrToStringUni((IntPtr)pPathXLL);
+            string tempDirPath = Marshal.PtrToStringUni((IntPtr)pTempDirPath);
+            _alc = new ExcelDnaAssemblyLoadContext(pathXll, disableAssemblyContextUnload == 0);
+            AssemblyManager.Initialize((IntPtr)hModuleXll, pathXll, _alc, Path.Combine(tempDirPath, "ExcelDna.ManagedHost.NativeAOT"));
+            var initOK = (bool)ExcelDna.Loader.XlAddIn.Initialize((IntPtr)xlAddInExportInfoAddress, (IntPtr)hModuleXll, pathXll, tempDirPath,
+                    (Func<string, int, byte[]>)AssemblyManager.GetResourceBytes,
+                    (Func<string, Assembly>)_alc.LoadFromAssemblyPath,
+                    (Func<byte[], byte[], Assembly>)_alc.LoadFromAssemblyBytes,
+                    (Action<TraceSource>)Logger.SetIntegrationTraceSource, true);
 
             return initOK ? (short)1 : (short)0;
         }
@@ -106,7 +124,7 @@ namespace ExcelDna.ManagedHost
                 Func<byte[], byte[], Assembly> loadFromAssemblyBytes,
                 Action<TraceSource> setIntegrationTraceSource)
         {
-            return XlAddIn.Initialize(xlAddInExportInfoAddress, hModuleXll, pathXll, null, getResourceBytes, loadFromAssemblyPath, loadFromAssemblyBytes, setIntegrationTraceSource);
+            return XlAddIn.Initialize(xlAddInExportInfoAddress, hModuleXll, pathXll, null, getResourceBytes, loadFromAssemblyPath, loadFromAssemblyBytes, setIntegrationTraceSource, false);
         }
     }
 #endif

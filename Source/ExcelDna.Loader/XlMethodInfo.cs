@@ -275,7 +275,7 @@ namespace ExcelDna.Loader
                         {
                             if (dtAtt is ExcelFunctionAttribute dfa)
                             {
-                                fa.MergeGroupAttributes(dfa);
+                                fa.Merge(dfa);
                                 break;
                             }
                         }
@@ -288,7 +288,7 @@ namespace ExcelDna.Loader
                         {
                             if (dtAtt is ExcelCommandAttribute dca)
                             {
-                                ca.MergeGroupAttributes(dca);
+                                ca.Merge(dca);
                                 break;
                             }
                         }
@@ -305,8 +305,9 @@ namespace ExcelDna.Loader
                 {
                     foreach (object dtAtt in method.DeclaringType.GetCustomAttributes(false))
                     {
-                        if (dtAtt is ExcelFunctionAttribute || dtAtt is ExcelCommandAttribute)
-                        {
+                        if (dtAtt is ExcelCommandAttribute ||
+                           (dtAtt is ExcelFunctionAttribute && method.ReturnType != typeof(void))
+                        ) {
                             methodAttribute = dtAtt;
                             break;
                         }

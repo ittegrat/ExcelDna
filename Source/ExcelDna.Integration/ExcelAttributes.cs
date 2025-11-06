@@ -79,7 +79,24 @@ namespace ExcelDna.Integration
             Description = description;
         }
 
-        public void MergeGroupAttributes(ExcelFunctionAttribute ca) {
+        public ExcelFunctionAttribute(ExcelFunctionAttribute src)
+        {
+            Category = src.Category;
+            Prefix = src.Prefix;
+            Name = src.Name;
+            Description = src.Description;
+            HelpTopic = src.HelpTopic;
+            IsVolatile = src.IsVolatile;
+            IsHidden = src.IsHidden;
+            IsExceptionSafe = src.IsExceptionSafe;
+            IsMacroType = src.IsMacroType;
+            IsThreadSafe = src.IsThreadSafe;
+            IsClusterSafe = src.IsClusterSafe;
+            ExplicitRegistration = src.ExplicitRegistration;
+            SuppressOverwriteError = src.SuppressOverwriteError;
+        }
+
+        public void Merge(ExcelFunctionAttribute ca) {
             if (Prefix == null) Prefix = ca.Prefix;
             if (Description == null) Description = ca.Description;
             if (Category == null) Category = ca.Category;
@@ -190,7 +207,7 @@ namespace ExcelDna.Integration
             Description = description;
         }
 
-        public void MergeGroupAttributes(ExcelCommandAttribute ca) {
+        public void Merge(ExcelCommandAttribute ca) {
             if (Prefix == null) Prefix = ca.Prefix;
             if (Description == null) Description = ca.Description;
             if (HelpTopic == null) HelpTopic = ca.HelpTopic;
@@ -208,6 +225,15 @@ namespace ExcelDna.Integration
 	[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
     [MeansImplicitUse]
     public class ExcelParameterConversionAttribute : Attribute
+    {
+    }
+
+    /// <summary>
+    /// For user-defined return conversions.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    [MeansImplicitUse]
+    public class ExcelReturnConversionAttribute : Attribute
     {
     }
 

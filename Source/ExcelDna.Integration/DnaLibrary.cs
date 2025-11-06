@@ -60,6 +60,16 @@ namespace ExcelDna.Integration
             }
         }
 
+        private static bool _IsNativeAOTActive;
+        [XmlIgnore]
+        internal static bool IsNativeAOTActive
+        {
+            get
+            {
+                return _IsNativeAOTActive;
+            }
+        }
+
         private string _Name;
         [XmlAttribute]
         public string Name
@@ -236,10 +246,12 @@ namespace ExcelDna.Integration
                         assemblies.AddRange(lib.GetAssemblies(pathResolveRoot, this));
                     }
                 }
+#if USE_WINDOWS_FORMS
                 foreach (Project proj in GetProjects())
                 {
                     assemblies.AddRange(proj.GetAssemblies(pathResolveRoot, this));
                 }
+#endif
             }
             catch (Exception e)
             {
@@ -257,13 +269,9 @@ namespace ExcelDna.Integration
         [XmlIgnore]
         private List<MethodInfo> _methods = new List<MethodInfo>();
         [XmlIgnore]
-        List<ExtendedRegistration.ExcelParameterConversion> _excelParameterConversions = new List<ExtendedRegistration.ExcelParameterConversion>();
+        private ExtendedRegistration.Registration.Configuration _extendedRegistrationConfiguration;
         [XmlIgnore]
         private List<Registration.ExcelFunctionRegistration> _excelFunctionsExtendedRegistration = new List<Registration.ExcelFunctionRegistration>();
-        [XmlIgnore]
-        private List<Registration.FunctionExecutionHandlerSelector> _excelFunctionExecutionHandlerSelectors = new List<Registration.FunctionExecutionHandlerSelector>();
-        [XmlIgnore]
-        private List<ExtendedRegistration.ExcelFunctionProcessor> _excelFunctionProcessors = new List<ExtendedRegistration.ExcelFunctionProcessor>();
         [XmlIgnore]
         private List<ExportedAssembly> _exportedAssemblies;
 
@@ -281,10 +289,22 @@ namespace ExcelDna.Integration
 
             // Recursively get assemblies down .dna tree.
             _exportedAssemblies = GetAssemblies(dnaResolveRoot);
-            AssemblyLoader.ProcessAssemblies(_exportedAssemblies, _methods, _excelParameterConversions, _excelFunctionProcessors, _excelFunctionsExtendedRegistration, _excelFunctionExecutionHandlerSelectors, _addIns, rtdServerTypes, comClassTypes);
+
+            var excelParameterConversions = new List<ExtendedRegistration.ExcelParameterConversion>();
+            var excelReturnConversions = new List<ExtendedRegistration.ExcelReturnConversion>();
+            var excelFunctionExecutionHandlerSelectors = new List<Registration.FunctionExecutionHandlerSelector>();
+            var excelFunctionProcessors = new List<ExtendedRegistration.ExcelFunctionProcessor>();
+            AssemblyLoader.ProcessAssemblies(_exportedAssemblies, _methods, excelParameterConversions, excelReturnConversions, excelFunctionProcessors, _excelFunctionsExtendedRegistration, excelFunctionExecutionHandlerSelectors, _addIns, rtdServerTypes, comClassTypes);
+            AssemblyLoader.GetExcelParameterConversions(Registration.StaticRegistration.ExcelParameterConversions, excelParameterConversions);
+            AssemblyLoader.GetExcelReturnConversions(Registration.StaticRegistration.ExcelReturnConversions, excelReturnConversions);
+            AssemblyLoader.GetExcelFunctionExecutionHandlerSelectors(Registration.StaticRegistration.ExcelFunctionExecutionHandlerSelectors, excelFunctionExecutionHandlerSelectors);
+            _extendedRegistrationConfiguration = new ExtendedRegistration.Registration.Configuration() { ParameterConversions = excelParameterConversions, ReturnConversions = excelReturnConversions, ExcelFunctionProcessors = excelFunctionProcessors, ExcelFunctionExecutionHandlerSelectors = excelFunctionExecutionHandlerSelectors };
+
+            Registration.StaticRegistration.ExcelAddIns.ForEach(i => AssemblyLoader.GetExcelAddIns(null, i, _addIns));
+            ObjectHandles.ObjectHandleRegistration.ProcessAssemblyAttributes(Registration.StaticRegistration.AssemblyAttributes);
 
             // Register RTD Server Types (i.e. remember that these types are available as RTD servers, with relevant ProgId etc.)
-            RtdRegistration.RegisterRtdServerTypes(rtdServerTypes);
+            RtdRegistration.RegisterRtdServerTypes(rtdServerTypes.Select(i => new TypeHelperDynamic(i)));
 
             // CAREFUL: This interacts with the implementation of ExcelRtdServer to implement the thread-safe synchronization.
             // Check whether we have an ExcelRtdServer type, and need to install the Sync Window
@@ -322,13 +342,15 @@ namespace ExcelDna.Integration
             // Register special RegistrationInfo function
             RegistrationInfo.Register();
             SynchronizationManager.Install(true);
-            // Register my Methods
-            if (_excelFunctionExecutionHandlerSelectors.Count == 0)
-                ExcelIntegration.RegisterMethods(_methods);
-            else
-                ExtendedRegistration.Registration.RegisterStandard(_methods.Select(i => new ExcelDna.Registration.ExcelFunctionRegistration(i)), _excelFunctionExecutionHandlerSelectors);
 
-            ExtendedRegistration.Registration.RegisterExtended(_excelFunctionsExtendedRegistration, _excelParameterConversions, _excelFunctionProcessors, _excelFunctionExecutionHandlerSelectors);
+            AssemblyLoader.GetExcelMethods(Registration.StaticRegistration.MethodsForRegistration, true, _methods, _excelFunctionsExtendedRegistration);
+
+            // Register my Methods
+            List<MethodInfo> commands = _methods.Where(Registration.ExcelCommandRegistration.IsCommand).ToList();
+            ExcelIntegration.RegisterMethods(commands);
+
+            var functions = _methods.Except(commands).Select(i => new Registration.ExcelFunctionRegistration(i)).Concat(_excelFunctionsExtendedRegistration);
+            ExtendedRegistration.Registration.Register(functions, _extendedRegistrationConfiguration);
 
             // Invoke AutoOpen in all assemblies
             foreach (AssemblyLoader.ExcelAddInInfo addIn in _addIns)
@@ -392,49 +414,47 @@ namespace ExcelDna.Integration
         internal void LoadCustomUI()
         {
             bool uiLoaded = false;
-            if (ExcelDnaUtil.ExcelVersion >= 12.0)
-            {
-                // Load ComAddIns
-                foreach (AssemblyLoader.ExcelAddInInfo addIn in _addIns)
-                {
-                    if (addIn.IsCustomUI)
-                    {
-                        // Load ExcelRibbon classes
-                        ExcelRibbon excelRibbon = addIn.Instance as ExcelRibbon;
-                        excelRibbon.DnaLibrary = addIn.ParentDnaLibrary;
-                        ExcelComAddInHelper.LoadComAddIn(excelRibbon);
-                        uiLoaded = true;
-                    }
-                }
 
-                // CONSIDER: Really not sure if this is a good idea - seems to interfere with unloading somehow.
-                //if (uiLoaded == false && CustomUIs != null)
-                //{
-                //    // Check whether we should add an empty ExcelCustomUI instance to load a Ribbon interface?
-                //    bool loadEmptyAddIn = false;
-                //    if (CustomUIs != null)
-                //    {
-                //        foreach (XmlNode xmlCustomUI in CustomUIs)
-                //        {
-                //            if (xmlCustomUI.LocalName == "customUI" &&
-                //                (xmlCustomUI.NamespaceURI == ExcelRibbon.NamespaceCustomUI2007 ||
-                //                 (ExcelDnaUtil.ExcelVersion >= 14.0 &&
-                //                  xmlCustomUI.NamespaceURI == ExcelRibbon.NamespaceCustomUI2010)))
-                //            {
-                //                loadEmptyAddIn = true;
-                //            }
-                //            if (loadEmptyAddIn)
-                //            {
-                //                // There will be Ribbon xml to load. Make a temp add-in and load it.
-                //                ExcelRibbon customUI = new ExcelRibbon();
-                //                customUI.DnaLibrary = this;
-                //                ExcelComAddInHelper.LoadComAddIn(customUI);
-                //                uiLoaded = true;
-                //            }
-                //        }
-                //    }
-                //}
+            // Load ComAddIns
+            foreach (AssemblyLoader.ExcelAddInInfo addIn in _addIns)
+            {
+                if (addIn.IsCustomUI)
+                {
+                    // Load ExcelRibbon classes
+                    ExcelComAddIn excelRibbon = addIn.Instance as ExcelComAddIn;
+                    excelRibbon.DnaLibrary = addIn.ParentDnaLibrary;
+                    ExcelComAddInHelper.LoadComAddIn(excelRibbon);
+                    uiLoaded = true;
+                }
             }
+
+            // CONSIDER: Really not sure if this is a good idea - seems to interfere with unloading somehow.
+            //if (uiLoaded == false && CustomUIs != null)
+            //{
+            //    // Check whether we should add an empty ExcelCustomUI instance to load a Ribbon interface?
+            //    bool loadEmptyAddIn = false;
+            //    if (CustomUIs != null)
+            //    {
+            //        foreach (XmlNode xmlCustomUI in CustomUIs)
+            //        {
+            //            if (xmlCustomUI.LocalName == "customUI" &&
+            //                (xmlCustomUI.NamespaceURI == ExcelRibbon.NamespaceCustomUI2007 ||
+            //                 (ExcelDnaUtil.ExcelVersion >= 14.0 &&
+            //                  xmlCustomUI.NamespaceURI == ExcelRibbon.NamespaceCustomUI2010)))
+            //            {
+            //                loadEmptyAddIn = true;
+            //            }
+            //            if (loadEmptyAddIn)
+            //            {
+            //                // There will be Ribbon xml to load. Make a temp add-in and load it.
+            //                ExcelRibbon customUI = new ExcelRibbon();
+            //                customUI.DnaLibrary = this;
+            //                ExcelComAddInHelper.LoadComAddIn(customUI);
+            //                uiLoaded = true;
+            //            }
+            //        }
+            //    }
+            //}
 
             // should we load CommandBars?
             if (uiLoaded == false && CustomUIs != null)
@@ -443,7 +463,9 @@ namespace ExcelDna.Integration
                 {
                     if (xmlCustomUI.LocalName == "commandBars")
                     {
+#if USE_WINDOWS_FORMS
                         ExcelCommandBarUtil.LoadCommandBars(xmlCustomUI, this.GetImage);
+#endif
                     }
                 }
             }
@@ -468,7 +490,7 @@ namespace ExcelDna.Integration
 
         // Statics
         private static DnaLibrary rootLibrary;
-        internal static void InitializeRootLibrary(string xllPath)
+        internal static void InitializeRootLibrary(string xllPath, bool isNativeAOTActive)
         {
             // Loads the primary .dna library
             // Load sequence is:
@@ -478,7 +500,10 @@ namespace ExcelDna.Integration
             // CAREFUL: Sequence here is fragile - this is the first place where we start logging
             _XllPath = xllPath;
             _xllPathPathInfo = new FileInfo(xllPath);
+            _IsNativeAOTActive = isNativeAOTActive;
+#if USE_WINDOWS_FORMS
             Logging.LogDisplay.CreateInstance();
+#endif
             Logger.Initialization.Verbose("Enter DnaLibrary.InitializeRootLibrary");
             byte[] dnaBytes = ExcelIntegration.GetDnaFileBytes("__MAIN__");
             if (dnaBytes != null)
@@ -500,7 +525,8 @@ namespace ExcelDna.Integration
             // If there have been problems, ensure that there is at lease some current library.
             if (rootLibrary == null)
             {
-                Logger.Initialization.Error("No Dna Library found.");
+                if (!IsNativeAOTActive)
+                    Logger.Initialization.Error("No Dna Library found.");
                 rootLibrary = new DnaLibrary();
             }
 
@@ -542,7 +568,8 @@ namespace ExcelDna.Integration
 
             if (!File.Exists(fileName))
             {
-                Logger.Initialization.Error("The required .dna script file {0} does not exist.", fileName);
+                if (!IsNativeAOTActive)
+                    Logger.Initialization.Error("The required .dna script file {0} does not exist.", fileName);
                 return null;
             }
 
@@ -616,6 +643,14 @@ namespace ExcelDna.Integration
             get
             {
                 return Path.GetDirectoryName(XllPath);
+            }
+        }
+
+        internal static ExtendedRegistration.Registration.Configuration ExtendedRegistrationConfiguration
+        {
+            get
+            {
+                return CurrentLibrary._extendedRegistrationConfiguration;
             }
         }
 
@@ -706,6 +741,7 @@ namespace ExcelDna.Integration
             return null;
         }
 
+#if USE_WINDOWS_FORMS
         public Bitmap GetImage(string imageId)
         {
             // We expect these to be small images.
@@ -747,6 +783,7 @@ namespace ExcelDna.Integration
             }
             return null;
         }
+#endif
 
     }
 

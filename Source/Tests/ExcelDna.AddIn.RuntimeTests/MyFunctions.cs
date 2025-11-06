@@ -7,10 +7,22 @@ namespace ExcelDna.AddIn.RuntimeTests
 {
     public class MyFunctions
     {
+        [ExcelCommand(MenuText = "MyCommandHello")]
+        public static void MyCommandHello()
+        {
+            Logger.Log("Hello command.");
+        }
+
         [ExcelFunction]
         public static string SayHello(string name)
         {
             return $"Hello {name}";
+        }
+
+        [ExcelFunction]
+        public static string MySayHelloWithExclamation(string name)
+        {
+            return $"Hello with exclamation {name}";
         }
 
         [ExcelFunction, Logging(7)]
@@ -139,6 +151,12 @@ namespace ExcelDna.AddIn.RuntimeTests
         public static string MyVersion2(Version v)
         {
             return "The Version value with field count 2 is " + v.ToString(2);
+        }
+
+        [ExcelFunction]
+        public static TestType1 MyReturnTestType1(string s)
+        {
+            return new TestType1("The TestType1 return value is " + s);
         }
 
         [ExcelFunction]
