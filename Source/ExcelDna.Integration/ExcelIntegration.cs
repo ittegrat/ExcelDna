@@ -201,7 +201,7 @@ namespace ExcelDna.Integration
         internal static void Initialize(string xllPath)
         {
             ExcelDnaUtil.Initialize();  // Set up window handle
-            Logging.TraceLogger.Initialize();
+            Logging.TraceLogger.Initialize(xllPath);
             DnaLibrary.InitializeRootLibrary(xllPath);
         }
 

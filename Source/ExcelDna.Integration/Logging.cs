@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Security;
 using System.Text;
 
@@ -83,7 +84,7 @@ namespace ExcelDna.Logging
         const string TraceSourceName = "ExcelDna.Integration";
         internal static TraceSource IntegrationTraceSource; // Also retrieved by ExcelDna.Loader through ExcelIntegration.GetIntegrationTraceSource()
 
-        public static void Initialize()
+        public static void Initialize(string xllPath)
         {
             if (!s_LoggingInitialized)
             {
@@ -147,7 +148,8 @@ namespace ExcelDna.Logging
                     {
                         Trace.AutoFlush = true;
 
-                        TextWriterTraceListener textWriterTraceListener = new TextWriterTraceListener(settings.FileName, "FileWriter");
+                        string fileName = Path.ChangeExtension(settings.FileName, String.Concat(Path.GetFileNameWithoutExtension(xllPath), Path.GetExtension(settings.FileName)));
+                        TextWriterTraceListener textWriterTraceListener = new TextWriterTraceListener(fileName, "FileWriter");
                         if (settings.FileLevel.HasValue)
                             textWriterTraceListener.Filter = new DiagnosticsFilter(settings.FileLevel.Value);
                         IntegrationTraceSource.Listeners.Add(textWriterTraceListener);
@@ -177,7 +179,7 @@ namespace ExcelDna.Logging
             }
             if (!s_LoggingInitialized)
             {
-                Initialize();
+                Initialize(String.Empty);
             }
             if (traceSource == null || !traceSource.Switch.ShouldTrace(traceLevel))
             {

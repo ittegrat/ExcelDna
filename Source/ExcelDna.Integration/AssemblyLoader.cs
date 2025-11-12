@@ -182,7 +182,10 @@ namespace ExcelDna.Integration
                 else if (!isSupported)
                 {
                     // CONSIDER: More detailed logging
-                    Logger.Initialization.Info("Method not registered - unsupported signature, abstract or generic: '{0}.{1}'", mi.DeclaringType.Name, mi.Name);
+                    if (IsMethodSupported(mi, false))
+                        Logger.Initialization.Info("Method not registered - method not marked for export: '{0}.{1}'", mi.DeclaringType.Name, mi.Name);
+                    else
+                        Logger.Initialization.Info("Method not registered - unsupported signature, abstract or generic: '{0}.{1}'", mi.DeclaringType.Name, mi.Name);
                 }
 
                 if (isSupported)
