@@ -6,31 +6,56 @@ namespace ExcelDna.Integration.Helpers.DialogBox
 
     protected enum ControlType
     {
-      Dialog = 0,              /// DialogBox (special, not valid as DialogBox item)
-      DefaultOkButton = 1,     /// Default OK button
-      CancelButton = 2,        /// Cancel button
-      OkButton = 3,            /// OK button
-      DefaultCancelButton = 4, /// Default Cancel button
-      StaticText = 5,          /// Static text
-      TextEditBox = 6,         /// Text edit box
-      IntegerEditBox = 7,      /// Integer edit box
-      NumberEditBox = 8,       /// Number edit box
-      FormulaEditBox = 9,      /// Formula edit box
-      ReferenceEditBox = 10,   /// Reference edit box
-      OptionButtonGroup = 11,  /// Option button group
-      OptionButton = 12,       /// Option button
-      CheckBox = 13,           /// Check box
-      GroupBox = 14,           /// Group box
-      ListBox = 15,            /// List box
-      LinkedListBox = 16,      /// Linked list box
-      Icons = 17,              /// Icons
-      LinkedFileListBox = 18,  /// Linked file list box (Microsoft Excel for Windows only)
-      LinkedDriveDirBox = 19,  /// Linked drive and directory box (Microsoft Excel for Windows only)
-      DirectoryTextBox = 20,   /// Directory text box
-      DropDownListBox = 21,    /// Drop-down list box
-      LinkedDropDown = 22,     /// Drop-down combination edit/list box
-      PictureButton = 23,      /// Picture button
-      HelpButton = 24,         /// Help button
+      /// DialogBox (special, not valid as DialogBox item)
+      Dialog = 0,
+      /// Default OK button
+      DefaultOkButton = 1,
+      /// Cancel button
+      CancelButton = 2,
+      /// OK button
+      OkButton = 3,
+      /// Default Cancel button
+      DefaultCancelButton = 4,
+      /// Static text
+      StaticText = 5,
+      /// Text edit box
+      TextEditBox = 6,
+      /// Integer edit box
+      IntegerEditBox = 7,
+      /// Number edit box
+      NumberEditBox = 8,
+      /// Formula edit box
+      FormulaEditBox = 9,
+      /// Reference edit box
+      ReferenceEditBox = 10,
+      /// Option button group
+      OptionButtonGroup = 11,
+      /// Option button
+      OptionButton = 12,
+      /// Check box
+      CheckBox = 13,
+      /// Group box
+      GroupBox = 14,
+      /// List box
+      ListBox = 15,
+      /// Linked list box
+      LinkedListBox = 16,
+      /// Icons
+      Icons = 17,
+      /// Linked file list box (Microsoft Excel for Windows only)
+      LinkedFileListBox = 18,
+      /// Linked drive and directory box (Microsoft Excel for Windows only)
+      LinkedDriveDirBox = 19,
+      /// Directory text box
+      DirectoryTextBox = 20,
+      /// Drop-down list box
+      DropDownListBox = 21,
+      /// Drop-down combination edit/list box
+      LinkedDropDown = 22,
+      /// Picture button
+      PictureButton = 23,
+      /// Help button
+      HelpButton = 24,
     }
 
   }
