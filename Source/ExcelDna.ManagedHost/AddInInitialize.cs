@@ -34,6 +34,7 @@ namespace ExcelDna.ManagedHost
 #if NETCOREAPP
         static ExcelDnaAssemblyLoadContext _alc;
 
+#if !AOT_COMPATIBLE
         [UnmanagedCallersOnly]
         public static short Initialize(void* xlAddInExportInfoAddress, void* hModuleXll, void* pPathXLL, byte disableAssemblyContextUnload, void* pTempDirPath)
         {
@@ -55,8 +56,8 @@ namespace ExcelDna.ManagedHost
 
             return initOK ? (short)1 : (short)0;
         }
-
-        public static short InitializeNativeAOT(void* xlAddInExportInfoAddress, void* hModuleXll, void* pPathXLL, byte disableAssemblyContextUnload, void* pTempDirPath)
+#else
+        public static short InitializeNativeAOT(void* xlAddInExportInfoAddress, void* hModuleXll, void* pPathXLL, byte disableAssemblyContextUnload, void* pTempDirPath, Assembly entryAssembly)
         {
             UnloadALC();
             ProcessStartupHooks();
@@ -65,14 +66,16 @@ namespace ExcelDna.ManagedHost
             string tempDirPath = Marshal.PtrToStringUni((IntPtr)pTempDirPath);
             _alc = new ExcelDnaAssemblyLoadContext(pathXll, disableAssemblyContextUnload == 0);
             AssemblyManager.Initialize((IntPtr)hModuleXll, pathXll, _alc, Path.Combine(tempDirPath, "ExcelDna.ManagedHost.NativeAOT"));
+            SetDllImportResolver(entryAssembly);
             var initOK = (bool)ExcelDna.Loader.XlAddIn.Initialize((IntPtr)xlAddInExportInfoAddress, (IntPtr)hModuleXll, pathXll, tempDirPath,
                     (Func<string, int, byte[]>)AssemblyManager.GetResourceBytes,
-                    (Func<string, Assembly>)_alc.LoadFromAssemblyPath,
-                    (Func<byte[], byte[], Assembly>)_alc.LoadFromAssemblyBytes,
+                    (_) => null,
+                    (_, _) => null,
                     (Action<TraceSource>)Logger.SetIntegrationTraceSource, true);
 
             return initOK ? (short)1 : (short)0;
         }
+#endif
 
         private static void UnloadALC()
         {
@@ -106,11 +109,23 @@ namespace ExcelDna.ManagedHost
             {
                 Type StartupHookProviderType = Type.GetType($"System.StartupHookProvider, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e");
                 MethodInfo ProcessStartupHooksMethod = StartupHookProviderType.GetMethod("ProcessStartupHooks", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.InvokeMethod);
-                ProcessStartupHooksMethod.Invoke(null, null);
+                ProcessStartupHooksMethod.Invoke(null, new object[ProcessStartupHooksMethod.GetParameters().Length]);
             }
             catch
             {
             }
+        }
+
+        private static void SetDllImportResolver(Assembly entryAssembly)
+        {
+            NativeLibrary.SetDllImportResolver(entryAssembly, (libraryName, assembly, searchPath) =>
+            {
+                string libraryPath = AssemblyManager.NativeLibraryResolve(libraryName);
+                if (libraryPath != null && NativeLibrary.TryLoad(libraryPath, out IntPtr handle))
+                    return handle;
+
+                return IntPtr.Zero;
+            });
         }
     }
 #endif

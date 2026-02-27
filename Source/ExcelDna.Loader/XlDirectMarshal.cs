@@ -29,13 +29,19 @@ namespace ExcelDna.Loader
             //var xlDelegate = GetNativeDelegate(methodInfo);
             var xlDelegate = GetLazyDelegate(methodInfo);
             methodInfo.DelegateHandle = GCHandle.Alloc(xlDelegate);
-            if (XlAddIn.IsNativeAOTActive)
-                methodInfo.FunctionPointer = MarshalNativeAOT.GetFunctionPointerForDelegate(xlDelegate, methodInfo);
-            else
-                methodInfo.FunctionPointer = Marshal.GetFunctionPointerForDelegate(xlDelegate);
+#if USE_STATIC_REGISTRATION
+            methodInfo.FunctionPointer = methodInfo.HasReturnType ?
+                Registration.StaticRegistration.DirectMarshalTypeAdapter.GetFunctionPointerForDelegate(xlDelegate, methodInfo.Parameters.Length) :
+                Registration.StaticRegistration.DirectMarshalTypeAdapter.GetActionPointerForDelegate(xlDelegate, methodInfo.Parameters.Length);
+#else
+            methodInfo.FunctionPointer = Marshal.GetFunctionPointerForDelegate(xlDelegate);
+#endif
         }
 
         // NOTE: This is called in parallel, from a ThreadPool thread
+#if AOT_COMPATIBLE
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL3050:RequiresDynamicCode", Justification = "Passes all tests")]
+#endif
         static Delegate GetNativeDelegate(XlMethodInfo methodInfo)
         {
             // We convert
@@ -150,7 +156,11 @@ namespace ExcelDna.Loader
             Expression body;
             if (methodInfo.HasReturnType)
             {
+#if USE_STATIC_REGISTRATION
+                delegateType = Registration.StaticRegistration.DirectMarshalTypeAdapter.GetFunctionType(methodInfo.Parameters.Length);
+#else
                 delegateType = XlDirectMarshalTypes.XlFuncs[methodInfo.Parameters.Length];
+#endif
                 body = Expression.Block(
                     typeof(IntPtr),
                     new ParameterExpression[] { ctx },
@@ -161,7 +171,11 @@ namespace ExcelDna.Loader
             }
             else
             {
+#if USE_STATIC_REGISTRATION
+                delegateType = Registration.StaticRegistration.DirectMarshalTypeAdapter.GetActionType(methodInfo.Parameters.Length);
+#else
                 delegateType = XlDirectMarshalTypes.XlActs[methodInfo.Parameters.Length];
+#endif
                 if (methodInfo.IsExcelAsyncFunction)
                 {
                     body = Expression.Block(
@@ -182,20 +196,30 @@ namespace ExcelDna.Loader
 
         static Delegate GetLazyDelegate(XlMethodInfo methodInfo)
         {
-            var lazyLambda = new XlDirectMarshalLazy(() => GetNativeDelegate(methodInfo));
+            Func<Delegate> delegateFactory = () => GetNativeDelegate(methodInfo);
 
             // now we need to return the right method from lazyLambda, to be sure it can be assigned to the intended delegate type
             if (methodInfo.HasReturnType)
             {
+#if USE_STATIC_REGISTRATION
+                return Registration.StaticRegistration.DirectMarshalTypeAdapter.CreateFunctionDelegate(delegateFactory, methodInfo.Parameters.Length);
+#else
+                var lazyLambda = new XlDirectMarshalLazy(delegateFactory);
                 var delegateType = XlDirectMarshalTypes.XlFuncs[methodInfo.Parameters.Length];
                 var method = typeof(XlDirectMarshalLazy).GetMethod($"Func{methodInfo.Parameters.Length}");
                 return Delegate.CreateDelegate(delegateType, lazyLambda, method);
+#endif
             }
             else
             {
+#if USE_STATIC_REGISTRATION
+                return Registration.StaticRegistration.DirectMarshalTypeAdapter.CreateActionDelegate(delegateFactory, methodInfo.Parameters.Length);
+#else
+                var lazyLambda = new XlDirectMarshalLazy(delegateFactory);
                 var delegateType = XlDirectMarshalTypes.XlActs[methodInfo.Parameters.Length];
                 var method = typeof(XlDirectMarshalLazy).GetMethod($"Act{methodInfo.Parameters.Length}");
                 return Delegate.CreateDelegate(delegateType, lazyLambda, method);
+#endif
             }
         }
     }

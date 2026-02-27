@@ -26,8 +26,12 @@
 			Xll64FilePath="$(ExcelDnaToolsPath)ExcelDnaNativeAOT64.xll"
 			ProjectName="$(MSBuildProjectName)"
 			PublishDir="$(PublishDir)"
+			OutDirectory="$(OutDir)"
+			NativeOutputPath="$(NativeOutputPath)"
 			RunMultithreaded="$(ExcelDnaPackRunMultithreaded)"
 			PackManagedOnWindows="$(ExcelDnaPackManagedResourcePackingOnWindows)"
+			AddInInclude="$(ExcelAddInInclude)"
+			IncludePdb="$(ExcelAddInIncludePdb)"
 		>
 		</PackExcelAddInNativeAOT>
 	</Target>

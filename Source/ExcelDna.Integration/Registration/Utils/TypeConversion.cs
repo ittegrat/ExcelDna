@@ -6,6 +6,9 @@ namespace ExcelDna.Registration
 {
     public static class TypeConversion
     {
+#if AOT_COMPATIBLE
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL3050:RequiresDynamicCode", Justification = "Passes all tests")]
+#endif
         public static LambdaExpression GetConversion(Type inputType, Type targetType)
         {
             var input = Expression.Parameter(typeof(object), "input");
@@ -22,6 +25,8 @@ namespace ExcelDna.Registration
                 return Expression.Call(((Func<Object, String>)ConvertToString).Method, input);
             if (type == typeof(DateTime))
                 return Expression.Call(((Func<Object, DateTime>)ConvertToDateTime).Method, input);
+            if (type == typeof(Nullable<DateTime>))
+                return Expression.Call(((Func<Object, Nullable<DateTime>>)ConvertToNullableDateTime).Method, input);
             if (type == typeof(Boolean))
                 return Expression.Call(((Func<Object, Boolean>)ConvertToBoolean).Method, input);
             if (type == typeof(Int64))
@@ -92,6 +97,11 @@ namespace ExcelDna.Registration
             }
         }
 
+        public static DateTime? ConvertToNullableDateTime(object value)
+        {
+            return ConvertToDateTime(value);
+        }
+
         public static bool ConvertToBoolean(object value)
         {
             object result;
@@ -133,6 +143,11 @@ namespace ExcelDna.Registration
             return checked((long)Math.Round(ConvertToDouble(value), MidpointRounding.ToEven));
         }
 
+        internal static double[] ConvertComplexToDoubles(System.Numerics.Complex value) => new double[2] { value.Real, value.Imaginary };
+
+#if AOT_COMPATIBLE
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "Passes all tests")]
+#endif
         public static object GetDefault(Type type)
         {
             if (type.IsValueType)

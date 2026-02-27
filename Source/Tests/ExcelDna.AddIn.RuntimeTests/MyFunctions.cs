@@ -13,6 +13,11 @@ namespace ExcelDna.AddIn.RuntimeTests
             Logger.Log("Hello command.");
         }
 
+        public static void MyMacro()
+        {
+            Logger.Log("My macro.");
+        }
+
         [ExcelFunction]
         public static string SayHello(string name)
         {
@@ -66,6 +71,30 @@ namespace ExcelDna.AddIn.RuntimeTests
         {
             return "Optional DateTime: " + dt.ToString();
         }
+
+        [ExcelFunction]
+        public static double MyDateTimeRequired(DateTime value) => value.ToOADate();
+
+        [ExcelFunction]
+        public static double MyDateTimeNullable(DateTime? value = null) => value?.ToOADate() ?? 42;
+
+        [ExcelFunction]
+        public static double MyDateTimeDefault(DateTime value = default) => value.ToOADate();
+
+        [ExcelFunction]
+        public static double MyDateTimeNullableWithoutDefault(DateTime? value) => value?.ToOADate() ?? 42;
+
+        [ExcelFunction]
+        public static double MyDoubleRequired(double value) => value;
+
+        [ExcelFunction]
+        public static double MyDoubleNullableWithoutDefault(double? value) => value ?? 7.89;
+
+        [ExcelFunction]
+        public static double MyDoubleNullable(double? value = 12.3) => value ?? 42.0;
+
+        [ExcelFunction]
+        public static double MyDoubleDefault(double value = 23.4) => value;
 
         [ExcelFunction]
         public static string MyEnum(DateTimeKind e)
@@ -170,6 +199,13 @@ namespace ExcelDna.AddIn.RuntimeTests
         [ExcelFunction]
         [return: ExcelHandle]
         public static Calc MyCreateCalc(double d1, double d2)
+        {
+            return new Calc(d1, d2);
+        }
+
+        [ExcelFunction]
+        [return: ExcelHandle(DisplayName = "MyCalcHandle")]
+        public static Calc MyCreateCalcDisplayName(double d1, double d2)
         {
             return new Calc(d1, d2);
         }
@@ -419,6 +455,26 @@ namespace ExcelDna.AddIn.RuntimeTests
         public static string MyParamsJoinString(string separator, params string[] values)
         {
             return String.Join(separator, values);
+        }
+
+        [ExcelFunction]
+        public static string MyEnum16(int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i10, int i11, int i12, int i13, int i14, int i15, TestEnum e)
+        {
+            int sum = i1 + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + i10 + i11 + i12 + i13 + i14 + i15;
+            return $"{e} {sum}";
+        }
+
+        [ExcelFunction]
+        public static string MyEnum17(int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i10, int i11, int i12, int i13, int i14, int i15, int i16, TestEnum e)
+        {
+            int sum = i1 + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + i10 + i11 + i12 + i13 + i14 + i15 + i16;
+            return $"{e} {sum}";
+        }
+
+        [ExcelFunction]
+        public static string MyWindowHandle()
+        {
+            return $"My WindowHandle is {ExcelDnaUtil.WindowHandle}.";
         }
     }
 }

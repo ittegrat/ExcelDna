@@ -46,6 +46,54 @@ namespace ExcelDna.AddIn.RuntimeTestsAOT
         }
 
         [ExcelFunction]
+        public static Task<bool> NativeTaskBool()
+        {
+            return Task.FromResult(true);
+        }
+
+        [ExcelFunction]
+        public static Task<CalcExcelHandle> NativeTaskCalcExcelHandle(double d1, double d2)
+        {
+            return Task.FromResult(new CalcExcelHandle(d1, d2));
+        }
+
+        [ExcelFunction]
+        public static Task<CalcExcelHandle> NativeTaskCalcExcelHandleWithCancellation(double d1, double d2, CancellationToken cancellation)
+        {
+            return Task.FromResult(new CalcExcelHandle(d1, d2));
+        }
+
+        [ExcelFunction]
+        public static Task<bool> NativeTaskBoolWithCancellation(CancellationToken cancellation)
+        {
+            return Task.FromResult(true);
+        }
+
+        [ExcelAsyncFunction]
+        public static bool NativeAsyncBool()
+        {
+            return true;
+        }
+
+        [ExcelAsyncFunction]
+        public static bool NativeAsyncBoolWithCancellation(CancellationToken cancellation)
+        {
+            return true;
+        }
+
+        [ExcelAsyncFunction]
+        public static CalcExcelHandle NativeAsyncCalcExcelHandle(double d1, double d2)
+        {
+            return new CalcExcelHandle(d1, d2);
+        }
+
+        [ExcelAsyncFunction]
+        public static CalcExcelHandle NativeAsyncCalcExcelHandleWithCancellation(double d1, double d2, CancellationToken cancellation)
+        {
+            return new CalcExcelHandle(d1, d2);
+        }
+
+        [ExcelFunction]
         public static string NativeApplicationName()
         {
             return (string)ExcelDnaUtil.DynamicApplication.Get("Name")!;
@@ -257,6 +305,31 @@ namespace ExcelDna.AddIn.RuntimeTestsAOT
         public static string NativeSayHelloWithLoggingID(string name)
         {
             return $"Native Hello {name}";
+        }
+
+        [ExcelFunction]
+        public static string NativeWindowHandle()
+        {
+            return $"Native WindowHandle is {ExcelDnaUtil.WindowHandle}.";
+        }
+
+        [ExcelFunction]
+        public static IObservable<string> NativeStringObservable(string s)
+        {
+            return new ObservableString(s);
+        }
+
+        [ExcelFunction]
+        [return: ExcelHandle]
+        public static IObservable<Calc> NativeCalcObservable(double d1, double d2)
+        {
+            return new ObservableCalc(d1, d2);
+        }
+
+        [ExcelFunction]
+        public static IObservable<string> NativeCalcSumObservable([ExcelHandle] Calc c)
+        {
+            return new ObservableString(c.Sum().ToString());
         }
     }
 }

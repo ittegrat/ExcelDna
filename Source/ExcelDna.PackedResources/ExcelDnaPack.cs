@@ -1,10 +1,10 @@
-﻿using System;
+﻿using ExcelDna.Integration;
+using ExcelDna.PackedResources.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using ExcelDna.Integration;
-using ExcelDna.PackedResources.Logging;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
 
 namespace ExcelDna.PackedResources
 {
@@ -150,14 +150,38 @@ namespace ExcelDna.PackedResources
             return 0;
         }
 
-        public static int PackNativeAOT(string mainNativeAssembly, string xllOutput, bool multithreading, bool useManagedResourceResolver, IBuildLogger buildLogger)
+        public static int PackNativeAOT(string mainNativeAssembly, IEnumerable<string> includeAssemblies, string xllOutput, bool multithreading, bool useManagedResourceResolver, bool includePdb, IBuildLogger buildLogger)
         {
             ResourceHelper.ResourceUpdater ru = new ResourceHelper.ResourceUpdater(xllOutput, useManagedResourceResolver, buildLogger);
-            ru.AddFile(File.ReadAllBytes(mainNativeAssembly), "__MAIN__", ResourceHelper.TypeName.NATIVE_ASSEMBLY, null, false, multithreading);  // Name here must exactly match name in host.cpp.
+            AddDllAndPdb(ru, mainNativeAssembly, "__MAIN__", ResourceHelper.TypeName.NATIVE_ASSEMBLY, null, false, multithreading, includePdb, true);  // Name here must exactly match name in host.cpp.
+
+#if PACKEXTENDEDDEPS
+            foreach (var a in includeAssemblies.Where(IsNativeLibrary))
+                AddDllAndPdb(ru, a, Path.GetFileName(a), ResourceHelper.TypeName.NATIVE_LIBRARY, null, true, multithreading, includePdb, false);
+#endif
+
             ru.EndUpdate();
 
             // All OK - set process exit code to 'Success'
             return 0;
+        }
+
+        private static void AddDllAndPdb(ResourceHelper.ResourceUpdater ru, string dllPath, string name, ResourceHelper.TypeName typeName, string source, bool compress, bool multithreading, bool includePdb, bool addOriginalFileName)
+        {
+            ru.AddFile(File.ReadAllBytes(dllPath), name.ToUpperInvariant(), typeName, source, compress, multithreading);
+            if (addOriginalFileName)
+                ru.AddProperty(($"{name}_ORIGINAL_DLL_FILE_NAME").ToUpperInvariant(), Path.GetFileName(dllPath), source);
+
+            if (!includePdb)
+                return;
+
+            string pdbPath = Path.ChangeExtension(dllPath, "pdb");
+            if (!File.Exists(pdbPath))
+                return;
+
+            ru.AddFile(File.ReadAllBytes(pdbPath), name.ToUpperInvariant(), ResourceHelper.TypeName.PDB, source, compress, multithreading);
+            if (addOriginalFileName)
+                ru.AddProperty(($"{name}_ORIGINAL_PDB_FILE_NAME").ToUpperInvariant(), Path.GetFileName(pdbPath), source);
         }
 
         static private byte[] PackDnaLibrary(string dnaPath, byte[] dnaContent, string dnaDirectory, ResourceHelper.ResourceUpdater ru, bool compress, bool multithreading, List<string> filesToPublish, bool packManagedDependencies, string[] dependenciesToExcludeParam, string outputBitness, IBuildLogger buildLogger)
@@ -338,6 +362,7 @@ namespace ExcelDna.PackedResources
                         path = dna.ResolvePath(rf.Path);
                         buildLogger.Information("  ~~> Assembly path {0} resolved to {1}.", rf.Path, path);
                     }
+#if !AOT_COMPATIBLE
                     if (path == null && rf.Name != null)
                     {
                         // Try Load as as last resort (and opportunity to load by FullName)
@@ -357,6 +382,7 @@ namespace ExcelDna.PackedResources
                             buildLogger.Error(e, "  ~~> Assembly {0} not 'Load'ed. Exception: {1}", rf.Name, e);
                         }
                     }
+#endif
                     if (path == null)
                     {
                         var format = "  ~~> ERROR: Reference with Path: {0} and Name: {1} NOT FOUND.";

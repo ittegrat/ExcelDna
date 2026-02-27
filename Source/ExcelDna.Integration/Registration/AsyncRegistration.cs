@@ -96,6 +96,10 @@ namespace ExcelDna.Registration
             return pis.Any() && pis.Last().Type == typeof(CancellationToken);
         }
 
+#if AOT_COMPATIBLE
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2060", Justification = "SourceGenerator adds methods to methodRefs")]
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL3050:RequiresDynamicCode", Justification = "SourceGenerator adds methods to methodRefs")]
+#endif
         static LambdaExpression WrapMethodRunTask(LambdaExpression functionLambda, List<object> returnCustomAttributes)
         {
             /* Either, from a lambda expression wrapping a method that looks like this:
@@ -175,6 +179,10 @@ namespace ExcelDna.Registration
             return Expression.Lambda(callTaskRun, functionLambda.Name, newParams);
         }
 
+#if AOT_COMPATIBLE
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2060", Justification = "SourceGenerator adds methods to methodRefs")]
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL3050:RequiresDynamicCode", Justification = "SourceGenerator adds methods to methodRefs")]
+#endif
         static LambdaExpression WrapMethodRunTaskWithCancellation(LambdaExpression functionLambda, List<object> returnCustomAttributes)
         {
             /* Either, from a lambda expression that looks like this:
@@ -264,6 +272,9 @@ namespace ExcelDna.Registration
 
         static LambdaExpression WrapMethodNativeAsyncTask(LambdaExpression functionLambda)
         {
+#if COM_GENERATED
+            throw new NotImplementedException("WrapMethodNativeAsyncTask is not supported in AOT.");
+#else
             /* Either, from a lambda expression that looks like this:
              * 
              *      static Task<string> myFunc(string name, int msDelay) {...}
@@ -310,10 +321,14 @@ namespace ExcelDna.Registration
             // Wrap with all the parameters
             var allParams = new List<ParameterExpression>(newParams) { asyncHandleParam };
             return Expression.Lambda(callTaskRun, functionLambda.Name, allParams);
+#endif
         }
 
         static LambdaExpression WrapMethodNativeAsyncTaskWithCancellation(LambdaExpression functionLambda)
         {
+#if COM_GENERATED
+            throw new NotImplementedException("WrapMethodNativeAsyncTaskWithCancellation is not supported in AOT.");
+#else
             /* Either, from a lambda expression that looks like this:
              * 
              *      static Task<string> myFunc(string name, int msDelay, CancellationToken ct) {...}
@@ -367,8 +382,13 @@ namespace ExcelDna.Registration
             // Wrap with all the parameters, and Compile to a Delegate
             var allParams = new List<ParameterExpression>(newParams) { asyncHandleParam };
             return Expression.Lambda(callTaskRun, functionLambda.Name, allParams);
+#endif
         }
 
+#if AOT_COMPATIBLE
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2060", Justification = "SourceGenerator adds methods to methodRefs")]
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL3050:RequiresDynamicCode", Justification = "SourceGenerator adds methods to methodRefs")]
+#endif
         static LambdaExpression WrapMethodObservable(LambdaExpression functionLambda, List<object> returnCustomAttributes)
         {
             /* Either, from a lambda expression that looks like this:
@@ -399,8 +419,7 @@ namespace ExcelDna.Registration
 
             // Build up the Observe method with the right generic type argument
             var obsMethod = typeof(ExcelAsyncUtil)
-                                .GetMember(userType ? "ObserveObject" : "Observe", MemberTypes.Method, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                                .Cast<MethodInfo>().First(i => i.IsGenericMethodDefinition)
+                                .GetMethod(userType ? "ObserveObject" : "Observe3", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                                 .MakeGenericMethod(returnType);
 
             // Get the function name

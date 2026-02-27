@@ -44,6 +44,7 @@ namespace ExcelDna.SourceGenerator.NativeAOT
     public unsafe class AddInInitialize
     {
         [UnmanagedCallersOnly(EntryPoint = "Initialize", CallConvs = new[] { typeof(CallConvCdecl) })]
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL3050:RequiresDynamicCode", Justification = "SourceGenerator preserves types and methods")]
         public static short Initialize(void* xlAddInExportInfoAddress, void* hModuleXll, void* pPathXLL, byte disableAssemblyContextUnload, void* pTempDirPath)
         {
             [ADDINS]
@@ -58,7 +59,9 @@ namespace ExcelDna.SourceGenerator.NativeAOT
 
 [EXECUTION-HANDLERS]
 
-            return ExcelDna.ManagedHost.AddInInitialize.InitializeNativeAOT(xlAddInExportInfoAddress, hModuleXll, pPathXLL, disableAssemblyContextUnload, pTempDirPath);
+            ExcelDna.Registration.StaticRegistration.DirectMarshalTypeAdapter = new DirectMarshalTypeAdapter();
+
+            return ExcelDna.ManagedHost.AddInInitialize.InitializeNativeAOT(xlAddInExportInfoAddress, hModuleXll, pPathXLL, disableAssemblyContextUnload, pTempDirPath, typeof(AddInInitialize).Assembly);
         }
     }
 }
@@ -79,15 +82,15 @@ namespace ExcelDna.SourceGenerator.NativeAOT
                     }
 
                     addIns += $"{regHost}.ExcelAddIns.Add(new ExcelDna.Integration.TypeHelper<{Util.GetFullTypeName(i.Type)}>([{actions}]));\r\n";
-                    addIns += $"interfaceRefs.Add(typeof({Util.GetFullTypeName(i.Type)}).GetInterface(\"ExcelDna.Integration.IExcelAddIn\"));\r\n";
-                    addIns += $"interfaceRefs.Add(typeof({Util.GetFullTypeName(i.Type)}).GetInterface(\"ExcelDna.Integration.CustomUI.IExcelRibbon\"));\r\n";
+                    addIns += $"interfaceRefs.Add(typeof({Util.GetFullTypeName(i.Type)}).GetInterface(\"ExcelDna.Integration.IExcelAddIn\")!);\r\n";
+                    addIns += $"interfaceRefs.Add(typeof({Util.GetFullTypeName(i.Type)}).GetInterface(\"ExcelDna.Integration.CustomUI.IExcelRibbon\")!);\r\n";
                 }
                 source = source.Replace("[ADDINS]", addIns);
             }
             {
                 string functions = "List<Type> typeRefs = new List<Type>();\r\n";
                 string methods = "List<MethodInfo> methodRefs = new List<MethodInfo>();\r\n";
-                foreach (var i in receiver.Functions)
+                foreach (var i in receiver.Functions.Concat(receiver.Commands))
                 {
                     functions += $"{regHost}.MethodsForRegistration.Add({GetMethod(i)});\r\n";
                     functions += $"typeRefs.Add(typeof({Util.MethodType(i)}));\r\n";
@@ -96,11 +99,31 @@ namespace ExcelDna.SourceGenerator.NativeAOT
                         functions += $"typeRefs.Add(typeof(Func<object, {Util.GetFullTypeName(p.Type)}>));\r\n";
                     }
 
-                    if (i.Parameters.Length > 0 && i.Parameters.Last().IsParams && i.Parameters.Last().Type is IArrayTypeSymbol arrayType)
+                    if (Util.IsLastArrayParams(i))
                     {
+                        var arrayType = (IArrayTypeSymbol)i.Parameters.Last().Type;
+
                         methods += $"methodRefs.Add(typeof(List<{Util.GetFullTypeName(arrayType.ElementType)}>).GetMethod(\"ToArray\")!);\r\n";
                         methods += $"methodRefs.Add(typeof(List<{Util.GetFullTypeName(arrayType.ElementType)}>).GetMethod(\"Add\")!);\r\n";
                         functions += $"typeRefs.Add(typeof(Func<{Util.CreateFunc16Args(i)}>));\r\n";
+                    }
+
+                    if (i.ReturnType is INamedTypeSymbol named && named.IsGenericType && Util.GetFullGenericTypeName(named) == "System.Threading.Tasks.Task")
+                    {
+                        foreach (string runMethodName in new string[] { "RunTask", "RunTaskObject", "RunTaskWithCancellation", "RunTaskObjectWithCancellation" })
+                            methods += $"methodRefs.Add(typeof(ExcelDna.Integration.ExcelAsyncUtil).GetMethod(\"{runMethodName}\")!.MakeGenericMethod(typeof({Util.GetFullTypeName(named.TypeArguments.First())})));\r\n";
+                    }
+
+                    if (i.ReturnType is INamedTypeSymbol namedObservable && namedObservable.IsGenericType && Util.GetFullGenericTypeName(namedObservable) == "System.IObservable")
+                    {
+                        foreach (string observableMethodName in new string[] { "Observe3", "ObserveObject" })
+                            methods += $"methodRefs.Add(typeof(ExcelDna.Integration.ExcelAsyncUtil).GetMethod(\"{observableMethodName}\", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!.MakeGenericMethod(typeof({Util.GetFullTypeName(namedObservable.TypeArguments.First())})));\r\n";
+                    }
+
+                    if (Util.HasCustomAttribute(i, "ExcelDna.Registration.ExcelAsyncFunctionAttribute"))
+                    {
+                        foreach (string runMethodName in new string[] { "RunAsTask", "RunAsTaskObject", "RunAsTaskWithCancellation", "RunAsTaskObjectWithCancellation" })
+                            methods += $"methodRefs.Add(typeof(ExcelDna.Integration.ExcelAsyncUtil).GetMethod(\"{runMethodName}\")!.MakeGenericMethod(typeof({Util.GetFullTypeName(i.ReturnType)})));\r\n";
                     }
 
                     functions += "\r\n";
@@ -147,8 +170,8 @@ namespace ExcelDna.SourceGenerator.NativeAOT
 
                 source = source.Replace("[EXECUTION-HANDLERS]", executionHandlers);
             }
-
             context.AddSource($"ExcelDna.SG.NAOT.Init.g.cs", source);
+            context.AddSource($"ExcelDna.SG.NAOT.Marshal.g.cs", MarshalGenerator.GenerateFile(receiver.Functions, receiver.Commands));
         }
 
         public void Initialize(GeneratorInitializationContext context)
@@ -164,6 +187,7 @@ namespace ExcelDna.SourceGenerator.NativeAOT
         class SyntaxReceiver : ISyntaxContextReceiver
         {
             public List<IMethodSymbol> Functions { get; } = new List<IMethodSymbol>();
+            public List<IMethodSymbol> Commands { get; } = new List<IMethodSymbol>();
             public List<IMethodSymbol> ParameterConversions { get; } = new List<IMethodSymbol>();
             public List<IMethodSymbol> ReturnConversions { get; } = new List<IMethodSymbol>();
             public List<IMethodSymbol> ExecutionHandlers { get; } = new List<IMethodSymbol>();
@@ -176,19 +200,23 @@ namespace ExcelDna.SourceGenerator.NativeAOT
                     IMethodSymbol methodSymbol = (context.SemanticModel.GetDeclaredSymbol(methodSyntax) as IMethodSymbol)!;
                     if (methodSymbol.ContainingType.DeclaredAccessibility == Accessibility.Public && methodSymbol.DeclaredAccessibility == Accessibility.Public && methodSymbol.IsStatic)
                     {
-                        if (HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelFunctionAttribute") || HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelCommandAttribute"))
+                        if (Util.HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelFunctionAttribute"))
                         {
                             Functions.Add(methodSymbol);
                         }
-                        else if (HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelParameterConversionAttribute"))
+                        else if (Util.HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelCommandAttribute"))
+                        {
+                            Commands.Add(methodSymbol);
+                        }
+                        else if (Util.HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelParameterConversionAttribute"))
                         {
                             ParameterConversions.Add(methodSymbol);
                         }
-                        else if (HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelReturnConversionAttribute"))
+                        else if (Util.HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelReturnConversionAttribute"))
                         {
                             ReturnConversions.Add(methodSymbol);
                         }
-                        else if (HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelFunctionExecutionHandlerSelectorAttribute"))
+                        else if (Util.HasCustomAttribute(methodSymbol, "ExcelDna.Integration.ExcelFunctionExecutionHandlerSelectorAttribute"))
                         {
                             ExecutionHandlers.Add(methodSymbol);
                         }
@@ -207,11 +235,6 @@ namespace ExcelDna.SourceGenerator.NativeAOT
                 }
             }
 
-            private static bool HasCustomAttribute(IMethodSymbol methodSymbol, string attribute)
-            {
-                return methodSymbol.GetAttributes().Any(a => a.AttributeClass != null &&
-                        Util.TypeHasAncestorWithFullName(a.AttributeClass, attribute));
-            }
         }
     }
 }

@@ -146,6 +146,15 @@ namespace ExcelDna.ManagedHost
                 Directory.CreateDirectory(tempDirPath);
                 File.WriteAllBytes(dllPath, dllBytes);
             }
+
+            byte[] pdbBytes = GetResourceBytes(unmanagedDllName.ToUpperInvariant(), 4);
+            if (pdbBytes != null)
+            {
+                string pdbPath = Path.ChangeExtension(dllPath, "pdb");
+                if (!File.Exists(pdbPath))
+                    File.WriteAllBytes(pdbPath, pdbBytes);
+            }
+
             return dllPath;
 #else
             return null;
@@ -155,7 +164,11 @@ namespace ExcelDna.ManagedHost
         internal static Assembly LoadFromAssemblyPath(string assemblyPath)
         {
 #if NETCOREAPP
+#if AOT_COMPATIBLE
+            return null;
+#else
             return alc.LoadFromAssemblyPath(assemblyPath);
+#endif
 #else
             return Assembly.LoadFrom(assemblyPath);
 #endif
@@ -164,7 +177,11 @@ namespace ExcelDna.ManagedHost
         internal static Assembly LoadFromAssemblyBytes(byte[] assemblyBytes, byte[] pdbBytes)
         {
 #if NETCOREAPP
+#if AOT_COMPATIBLE
+            return null;
+#else
             return alc.LoadFromAssemblyBytes(assemblyBytes, pdbBytes);
+#endif
 #else
             return (pdbBytes == null) ? Assembly.Load(assemblyBytes) : Assembly.Load(assemblyBytes, pdbBytes);
 #endif

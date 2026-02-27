@@ -19,19 +19,21 @@
 
   </PropertyGroup>
 
-  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
-
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>$(DefineConstants);COM_GENERATED</DefineConstants>
+    <IsAotCompatible>true</IsAotCompatible>
+    <DefineConstants>$(DefineConstants);COM_GENERATED;AOT_COMPATIBLE</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
     <Compile Remove="LogDisplay.cs" />
     <Compile Remove="LogDisplay.Designer.cs" />
+    <Compile Remove="DnaLibrarySerialization.cs" />
   </ItemGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' != 'net8.0-windows'">
+  <PropertyGroup Condition="'$(TargetFramework)' != 'net10.0-windows'">
     <UseWindowsForms>true</UseWindowsForms>
     <DefineConstants>$(DefineConstants);USE_WINDOWS_FORMS</DefineConstants>
   </PropertyGroup>
@@ -45,6 +47,40 @@
     <Reference Include="Microsoft.VisualBasic" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Registration\ExtendedFunc.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ExtendedFunc.tt</DependentUpon>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.205">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Registration\ExtendedFunc.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ExtendedFunc.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Registration\ExtendedFunc.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ExtendedFunc.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
   <PropertyGroup>
     <CleanDependsOn>$(CleanDependsOn);Restore;</CleanDependsOn>
   </PropertyGroup>
@@ -52,12 +88,5 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net462' And '$(Configuration)' == 'Release'">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LibDistFolder)" />
   </Target>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
-    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.205">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
 
 </Project>
